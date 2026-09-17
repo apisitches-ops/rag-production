@@ -58,6 +58,16 @@ Kaggle CSV (`train.csv`) → 51 PDFs (one per unique context) + `golden_set.json
 
 First full 200-question eval run hit rampant `TimeoutError`s — Ragas defaults to 16 concurrent calls, which overwhelmed the single local Ollama instance. Fixed with `RunConfig(max_workers=2)`.
 
-## In progress — Full 200-question Golden Set run
+## 2026-09-17 14:54 — First full baseline: `eval/reports/2026-09-17T07:54:09.494971+00:00.json`
 
-Second attempt, post-concurrency-fix, running in the background. Report will land in `eval/reports/`. Next feature to build will be chosen based on where this run shows the pipeline is weakest, rather than guessing ahead of the data.
+Full 200-question Golden Set run, post-concurrency-fix, no errors. This is the MVP's baseline (dense-only retrieval, no hybrid search/reranker/guardrail/ACL yet) — the "before" number for whatever gets built next.
+
+**Overall:** faithfulness 0.80 (computed for only 34% of answered items — see ADR-0004 update below), answer_relevancy 0.66, context_precision 0.82, abstention_rate 22%, abstention_correctness 83%.
+
+**Found:**
+- `summary`-category questions score worst on context_precision (0.39) — dense retrieval against the question's own embedding doesn't suit "summarize this document" questions, whose relevant content is spread across the whole document rather than concentrated near a semantically-similar passage.
+- `not_found_classification` abstention_correctness is 75%, not 100% — a quarter of genuinely unanswerable questions get answered anyway instead of triggering Abstention (hallucination risk).
+- `math_basic` has the lowest faithfulness (0.47) and second-lowest abstention_correctness (70%).
+- `faithfulness` computed for only 34% of answered items in practice (updated ADR-0004 with the real rate — the earlier note said "consistently fails," which undersold how often it actually does work).
+
+**Decision:** `answer_relevancy` (0.66) and `context_precision` (weak specifically on `summary`) are the two reliably-computed metrics with the most room to improve, and both are exactly what hybrid search (BM25+RRF) and a reranker are supposed to help with — this points at hybrid search/reranker as the next feature, confirming rather than overriding the roadmap's existing next-up item.
