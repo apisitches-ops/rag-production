@@ -1,4 +1,3 @@
-import httpx
 import psycopg
 import pymupdf
 from llama_index.core import Document as LlamaDocument
@@ -6,27 +5,12 @@ from llama_index.core.node_parser import HierarchicalNodeParser, get_leaf_nodes
 from pgvector.psycopg import register_vector
 
 from app import db
-
-OLLAMA_EMBED_URL = "http://localhost:11434/api/embed"
-EMBED_MODEL = "bge-m3"
-EMBED_BATCH_SIZE = 32
+from app.ollama import embed
 
 
 def _extract_text(path: str) -> str:
     with pymupdf.open(path) as pdf:
         return "\n\n".join(page.get_text() for page in pdf)
-
-
-def _embed(texts: list[str]) -> list[list[float]]:
-    embeddings: list[list[float]] = []
-    for start in range(0, len(texts), EMBED_BATCH_SIZE):
-        batch = texts[start : start + EMBED_BATCH_SIZE]
-        response = httpx.post(
-            OLLAMA_EMBED_URL, json={"model": EMBED_MODEL, "input": batch}, timeout=60
-        )
-        response.raise_for_status()
-        embeddings.extend(response.json()["embeddings"])
-    return embeddings
 
 
 def ingest_document(path: str, document_name: str | None = None) -> int:
@@ -37,7 +21,7 @@ def ingest_document(path: str, document_name: str | None = None) -> int:
 
     leaf_ids = {node.node_id for node in get_leaf_nodes(nodes)}
     child_nodes = [node for node in nodes if node.node_id in leaf_ids]
-    embeddings = _embed([node.get_content() for node in child_nodes])
+    embeddings = embed([node.get_content() for node in child_nodes])
     embedding_by_id = dict(zip((node.node_id for node in child_nodes), embeddings))
 
     with psycopg.connect(db.DATABASE_URL) as conn:
