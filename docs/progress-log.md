@@ -82,3 +82,11 @@ Asked "how many questions did it actually get right" — a crude substring-match
 - **Reasoning errors from the Dev Generator**: a self-contradictory price comparison (stated "Yes" while its own cited numbers said the opposite) and a wrong age calculation — consistent with `math_basic` already scoring lowest on faithfulness.
 
 **Decision:** these three findings (contamination, table precision, reasoning) point at a reranker as the more targeted next feature over plain hybrid search — a reranker can suppress co-retrieved wrong-document Nodes and improve which specific chunk actually gets used, which is closer to the actual failure modes found than adding BM25 alone would address.
+
+## 2026-09-17 — `0cb2701` Ticket #9: Reranker component
+
+`rerank(query, candidates)` in a new `app/reranker.py`, cross-encoding with BGE-reranker-v2-m3 (ONNX-quantized) on CPU/Metal per ADR-0003. Standalone — not wired into the query pipeline yet (ticket #10).
+
+**Research before coding:** found a working pre-quantized ONNX build (`EmbeddedLLM/bge-reranker-v2-m3-onnx-o3-cpu`) rather than exporting one ourselves. Hit one real gotcha: HuggingFace's default symlink cache breaks onnxruntime's external-data path validation (`External data path escapes model directory`) — fixed by downloading via `snapshot_download(local_dir=...)` into a real directory instead of the default cache. Measured latency for real before committing to the approach: ~3s one-time load, ~1.4s to rerank 20 candidates — within ADR-0003's own expectations.
+
+**Code-review fixes:** skip the network call entirely once the model is already cached locally (it was hitting the Hub every process start even with a full local cache — breaks offline use); pinned the model to an exact commit hash, matching how every other dependency in this repo is pinned; added a lock around the lazy singleton so concurrent callers can't race into duplicate downloads; made the cache path absolute (derived from the module's own file location) instead of relative to the process's working directory; declared `huggingface_hub` as an explicit dependency instead of relying on a transitive pull; batched reranking calls (matching the pattern already established in `app/ollama.py`) instead of one unbounded forward pass; removed a dead code branch that could never execute given how the tensor squeeze was already written.
