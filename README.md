@@ -8,7 +8,7 @@ Prerequisites: Docker Desktop, and [Ollama](https://ollama.com) running natively
 docker compose up -d --wait
 ```
 
-This starts Postgres with the pgvector extension already enabled (via `docker/postgres/init.sql`, run automatically on first startup).
+This starts Postgres with the pgvector extension and schema already set up (via `docker/postgres/init.sql`, run automatically on first startup against an empty volume — there's no migration tooling yet, so a schema change means `docker compose down -v` to pick it up on an existing volume).
 
 Then, with a Python 3.11+ virtualenv:
 
@@ -18,6 +18,8 @@ DATABASE_URL=postgresql://rag:rag@localhost:5432/rag uvicorn app.main:app --relo
 ```
 
 `GET /health` returns `{"status": "ok"}` once it has verified a live connection to Postgres.
+
+`POST /documents` (multipart, field `file`) ingests one PDF: extracts text (PyMuPDF), chunks it into parent/child Nodes (LlamaIndex `HierarchicalNodeParser`), embeds the child Nodes (`bge-m3` via Ollama), and stores them in Postgres. Returns `{"document_id": <id>}`.
 
 ## Tests
 
