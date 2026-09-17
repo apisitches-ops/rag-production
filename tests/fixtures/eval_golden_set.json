@@ -1,0 +1,14 @@
+[
+  {
+    "query": "What year does PTT aim to achieve Net Zero emissions?",
+    "expected_answer": "2050",
+    "category": "core",
+    "corpus_id": "sample"
+  },
+  {
+    "query": "What is the favorite color of PTT's chief financial officer?",
+    "expected_answer": "Not Found.",
+    "category": "not_found_classification",
+    "corpus_id": "sample"
+  }
+]

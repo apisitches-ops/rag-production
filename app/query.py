@@ -21,6 +21,7 @@ ABSTENTION_MESSAGE = "The available context doesn't contain enough information t
 class Answer(TypedDict):
     answer: str
     citations: list[str]
+    contexts: list[str]
     abstained: bool
 
 
@@ -78,10 +79,11 @@ def answer_query(query: str) -> Answer:
     generated = _generate(query, contexts)
 
     if ABSTENTION_MARKER in generated:
-        return Answer(answer=ABSTENTION_MESSAGE, citations=[], abstained=True)
+        return Answer(answer=ABSTENTION_MESSAGE, citations=[], contexts=[], abstained=True)
 
     return Answer(
         answer=generated,
         citations=[node_id for node_id, _ in contexts],
+        contexts=[content for _, content in contexts],
         abstained=False,
     )

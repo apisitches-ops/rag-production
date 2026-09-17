@@ -21,7 +21,7 @@ DATABASE_URL=postgresql://rag:rag@localhost:5432/rag uvicorn app.main:app --relo
 
 `POST /documents` (multipart, field `file`) ingests one PDF: extracts text (PyMuPDF), chunks it into parent/child Nodes (LlamaIndex `HierarchicalNodeParser`), embeds the child Nodes (`bge-m3` via Ollama), and stores them in Postgres. Returns `{"document_id": <id>}`.
 
-`POST /query` (JSON body `{"query": "..."}`) retrieves the closest child Nodes by embedding similarity, expands each to its parent's wider content, and asks the Dev Generator (`llama3.1:8b`) to answer from that context only. Returns `{"answer": str, "citations": [node_id, ...], "abstained": bool}` — `abstained` is `true` when the context wasn't enough to answer, per ADR-0004.
+`POST /query` (JSON body `{"query": "..."}`) retrieves the closest child Nodes by embedding similarity, expands each to its parent's wider content, and asks the Dev Generator (`llama3.1:8b`) to answer from that context only. Returns `{"answer": str, "citations": [node_id, ...], "contexts": [str, ...], "abstained": bool}` — `contexts` is the actual text handed to the Generator (used by the eval harness so it scores against what the pipeline really saw, not a re-derived approximation); `abstained` is `true` when the context wasn't enough to answer, per ADR-0004.
 
 ## Tests
 
@@ -30,3 +30,13 @@ Requires Postgres running (see above):
 ```
 DATABASE_URL=postgresql://rag:rag@localhost:5432/rag pytest
 ```
+
+## Eval
+
+`eval/golden_set.json` + `eval/corpus/` (51 Documents, 200 questions derived from the Kaggle Financial/Legal Evaluation Dataset — see `eval/build_corpus.py`) is the Golden Set. Running it wipes and re-ingests the database, so don't run it against data you want to keep:
+
+```
+DATABASE_URL=postgresql://rag:rag@localhost:5432/rag python -m eval.run_eval
+```
+
+Scores faithfulness, answer relevancy, and context precision (Ragas, judged by the Dev Generator per ADR-0004) for every answered question, and tracks a separate abstention rate/correctness rate for questions the pipeline should or shouldn't have Abstained on. `faithfulness` is frequently `null` — the Dev Generator (llama3.1:8b) can't reliably produce the structured claim-verification output Ragas needs for that specific metric; see ADR-0004. A report is written to `eval/reports/<timestamp>.json`.
