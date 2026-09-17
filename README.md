@@ -21,13 +21,11 @@ DATABASE_URL=postgresql://rag:rag@localhost:5432/rag uvicorn app.main:app --relo
 
 `POST /documents` (multipart, field `file`) ingests one PDF: extracts text (PyMuPDF), chunks it into parent/child Nodes (LlamaIndex `HierarchicalNodeParser`), embeds the child Nodes (`bge-m3` via Ollama), and stores them in Postgres. Returns `{"document_id": <id>}`.
 
-`POST /query` (JSON body `{"query": "..."}`) retrieves the closest child Nodes by embedding similarity, expands each to its parent's wider content, and asks the Dev Generator (`llama3.1:8b`) to answer from that context only. Returns `{"answer": str, "citations": [node_id, ...], "contexts": [str, ...], "abstained": bool}` — `contexts` is the actual text handed to the Generator (used by the eval harness so it scores against what the pipeline really saw, not a re-derived approximation); `abstained` is `true` when the context wasn't enough to answer, per ADR-0004.
-
-A reranker (`app/reranker.py`, BGE-reranker-v2-m3 ONNX-quantized, per ADR-0003) is available but not yet wired into `/query` — that's a separate ticket. First use downloads the model (~2.3GB) into `.cache/reranker-onnx/` (gitignored); later calls reuse it.
+`POST /query` (JSON body `{"query": "..."}`) embeds the question, dense-retrieves a wide candidate pool of child Nodes (each already expanded to its parent's wider content), dedupes by parent, reranks the deduped pool with a cross-encoder (`app/reranker.py`, BGE-reranker-v2-m3 ONNX-quantized, per ADR-0003 — the model is loaded at app startup, not on first request, so it doesn't block a real query on a ~2.3GB download; see the `lifespan` hook in `app/main.py`), keeps the top 5 by rerank score, and asks the Dev Generator (`llama3.1:8b`) to answer from that context only. Returns `{"answer": str, "citations": [node_id, ...], "contexts": [str, ...], "abstained": bool}` — `contexts` is the actual text handed to the Generator (used by the eval harness so it scores against what the pipeline really saw, not a re-derived approximation); `abstained` is `true` when the context wasn't enough to answer, per ADR-0004.
 
 ## Tests
 
-Requires Postgres running (see above):
+Requires Postgres running (see above). Any test touching `/query` or `answer_query` also downloads and runs the real reranker model on first use (~2.3GB, cached afterward in `.cache/reranker-onnx/`) — no mocking, consistent with how the rest of this test suite exercises real dependencies rather than doubles:
 
 ```
 DATABASE_URL=postgresql://rag:rag@localhost:5432/rag pytest

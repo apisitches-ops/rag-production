@@ -37,6 +37,12 @@ def _load() -> tuple[Any, Any]:
     return _tokenizer, _model
 
 
+def warm_up() -> None:
+    """Load the model eagerly (e.g. at app startup) so the first real
+    request doesn't block on a multi-GB download."""
+    _load()
+
+
 def rerank(query: str, candidates: list[tuple[str, str]]) -> list[tuple[str, str]]:
     if not candidates:
         return []

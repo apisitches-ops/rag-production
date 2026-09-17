@@ -5,10 +5,16 @@ from typing_extensions import TypedDict
 
 from app import db
 from app.ollama import embed
+from app.reranker import rerank
 
 OLLAMA_GENERATE_URL = "http://localhost:11434/api/generate"
 DEV_GENERATOR_MODEL = "llama3.1:8b"
 TOP_K = 5
+# Over-fetch a wider dense-similarity pool than TOP_K so the reranker has
+# real candidates to reorder, instead of TOP_K being decided by dense
+# similarity alone.
+RETRIEVAL_CANDIDATES = 20
+assert RETRIEVAL_CANDIDATES > TOP_K, "over-fetch pool must be wider than the final top-K"
 
 # Dev Generator (llama3.1:8b) can't reliably produce structured output, so
 # Abstention is signalled with a plain-text marker instead of JSON. Switch to
@@ -25,7 +31,7 @@ class Answer(TypedDict):
     abstained: bool
 
 
-def _retrieve(query_embedding: list[float]) -> list[tuple[str, str]]:
+def _retrieve(query: str, query_embedding: list[float]) -> list[tuple[str, str]]:
     with psycopg.connect(db.DATABASE_URL) as conn:
         register_vector(conn)
         rows = conn.execute(
@@ -37,17 +43,18 @@ def _retrieve(query_embedding: list[float]) -> list[tuple[str, str]]:
             ORDER BY n.embedding <=> %s::vector
             LIMIT %s
             """,
-            (query_embedding, TOP_K),
+            (query_embedding, RETRIEVAL_CANDIDATES),
         ).fetchall()
 
     seen_groups: set[str] = set()
-    contexts: list[tuple[str, str]] = []
+    candidates: list[tuple[str, str]] = []
     for node_id, group_key, content in rows:
         if group_key in seen_groups:
             continue
         seen_groups.add(group_key)
-        contexts.append((node_id, content))
-    return contexts
+        candidates.append((node_id, content))
+
+    return rerank(query, candidates)[:TOP_K]
 
 
 def _generate(query: str, contexts: list[tuple[str, str]]) -> str:
@@ -75,7 +82,7 @@ def _generate(query: str, contexts: list[tuple[str, str]]) -> str:
 
 def answer_query(query: str) -> Answer:
     query_embedding = embed([query])[0]
-    contexts = _retrieve(query_embedding)
+    contexts = _retrieve(query, query_embedding)
     generated = _generate(query, contexts)
 
     if ABSTENTION_MARKER in generated:
