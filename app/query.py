@@ -1,5 +1,10 @@
 import httpx
 import psycopg
+from llama_index.core.retrievers import BaseRetriever, QueryFusionRetriever
+from llama_index.core.retrievers.fusion_retriever import FUSION_MODES
+from llama_index.core.schema import NodeWithScore, QueryBundle, TextNode
+from llama_index.llms.ollama import Ollama
+from llama_index.retrievers.bm25 import BM25Retriever
 from pgvector.psycopg import register_vector
 from typing_extensions import TypedDict
 
@@ -31,20 +36,96 @@ class Answer(TypedDict):
     abstained: bool
 
 
-def _retrieve(query: str, query_embedding: list[float]) -> list[tuple[str, str]]:
-    with psycopg.connect(db.DATABASE_URL) as conn:
-        register_vector(conn)
-        rows = conn.execute(
-            """
-            SELECT n.id, COALESCE(n.parent_id, n.id), COALESCE(p.content, n.content)
-            FROM nodes n
-            LEFT JOIN nodes p ON p.id = n.parent_id
-            WHERE n.embedding IS NOT NULL
-            ORDER BY n.embedding <=> %s::vector
+# Shared by both retrievers below so a future change to candidate selection
+# (e.g. an additional filter) can't drift between the two.
+_CANDIDATE_JOIN_SQL = """
+    FROM nodes n
+    LEFT JOIN nodes p ON p.id = n.parent_id
+    WHERE n.embedding IS NOT NULL
+"""
+
+
+def _text_node(node_id: str, group_key: str, content: str) -> TextNode:
+    # group_key is plumbing (dedup-by-parent), not real content — excluded
+    # from what BM25/embeddings actually index, otherwise its UUID pollutes
+    # the lexical index with spurious hex-like token matches.
+    return TextNode(
+        id_=node_id,
+        text=content,
+        metadata={"group_key": group_key},
+        excluded_embed_metadata_keys=["group_key"],
+        excluded_llm_metadata_keys=["group_key"],
+    )
+
+
+class _DenseRetriever(BaseRetriever):
+    def __init__(self, conn: psycopg.Connection, query_embedding: list[float], limit: int) -> None:
+        self._conn = conn
+        self._query_embedding = query_embedding
+        self._limit = limit
+        super().__init__()
+
+    def _retrieve(self, query_bundle: QueryBundle) -> list[NodeWithScore]:
+        rows = self._conn.execute(
+            f"""
+            SELECT n.id, COALESCE(n.parent_id, n.id), COALESCE(p.content, n.content),
+                   n.embedding <=> %s::vector AS dist
+            {_CANDIDATE_JOIN_SQL}
+            ORDER BY dist
             LIMIT %s
             """,
-            (query_embedding, RETRIEVAL_CANDIDATES),
+            (self._query_embedding, self._limit),
         ).fetchall()
+        return [
+            NodeWithScore(node=_text_node(node_id, group_key, content), score=1 - dist)
+            for node_id, group_key, content, dist in rows
+        ]
+
+
+def _bm25_retriever(conn: psycopg.Connection, limit: int) -> BM25Retriever | None:
+    rows = conn.execute(
+        f"SELECT n.id, COALESCE(n.parent_id, n.id), COALESCE(p.content, n.content) {_CANDIDATE_JOIN_SQL}"
+    ).fetchall()
+    if not rows:
+        return None
+    nodes = [_text_node(node_id, group_key, content) for node_id, group_key, content in rows]
+    return BM25Retriever.from_defaults(nodes=nodes, similarity_top_k=limit)
+
+
+def _fused_retrieve(
+    query: str, query_embedding: list[float], limit: int
+) -> list[tuple[str, str, str]]:
+    with psycopg.connect(db.DATABASE_URL) as conn:
+        register_vector(conn)
+        bm25 = _bm25_retriever(conn, limit)
+        if bm25 is None:
+            return []
+
+        dense = _DenseRetriever(conn, query_embedding, limit)
+        # num_queries=1 disables QueryFusionRetriever's default LLM-based
+        # query expansion, so this adds no extra Dev Generator call. The
+        # `llm` param is still required (unused here) — omitting it makes the
+        # constructor eagerly resolve a default OpenAI LLM, which fails in
+        # this environment. use_async=False: neither retriever is actually
+        # async, so the default async fan-out just adds event-loop overhead
+        # for no concurrency benefit.
+        fusion = QueryFusionRetriever(
+            [dense, bm25],
+            llm=Ollama(model=DEV_GENERATOR_MODEL, request_timeout=120),
+            mode=FUSION_MODES.RECIPROCAL_RANK,
+            similarity_top_k=limit,
+            num_queries=1,
+            use_async=False,
+        )
+        results = fusion.retrieve(query)
+
+    return [
+        (r.node.node_id, r.node.metadata["group_key"], r.node.get_content()) for r in results
+    ]
+
+
+def _retrieve(query: str, query_embedding: list[float]) -> list[tuple[str, str]]:
+    rows = _fused_retrieve(query, query_embedding, RETRIEVAL_CANDIDATES)
 
     seen_groups: set[str] = set()
     candidates: list[tuple[str, str]] = []
