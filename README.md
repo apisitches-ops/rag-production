@@ -23,6 +23,8 @@ DATABASE_URL=postgresql://rag:rag@localhost:5432/rag uvicorn app.main:app --relo
 
 `POST /query` (JSON body `{"query": "..."}`) retrieves the closest child Nodes by embedding similarity, expands each to its parent's wider content, and asks the Dev Generator (`llama3.1:8b`) to answer from that context only. Returns `{"answer": str, "citations": [node_id, ...], "contexts": [str, ...], "abstained": bool}` — `contexts` is the actual text handed to the Generator (used by the eval harness so it scores against what the pipeline really saw, not a re-derived approximation); `abstained` is `true` when the context wasn't enough to answer, per ADR-0004.
 
+A reranker (`app/reranker.py`, BGE-reranker-v2-m3 ONNX-quantized, per ADR-0003) is available but not yet wired into `/query` — that's a separate ticket. First use downloads the model (~2.3GB) into `.cache/reranker-onnx/` (gitignored); later calls reuse it.
+
 ## Tests
 
 Requires Postgres running (see above):

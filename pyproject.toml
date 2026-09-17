@@ -16,6 +16,9 @@ dependencies = [
     "langchain-community==0.2.19",
     "datasets>=2.19",
     "pandas>=2.0",
+    "optimum[onnxruntime]>=1.20",
+    "transformers>=4.40",
+    "huggingface_hub>=0.24",
 ]
 
 [project.optional-dependencies]
@@ -32,5 +35,5 @@ build-backend = "setuptools.build_meta"
 include = ["app*", "eval*"]
 
 [[tool.mypy.overrides]]
-module = ["pandas", "datasets", "ragas.*"]
+module = ["pandas", "datasets", "ragas.*", "optimum.*", "transformers", "transformers.*"]
 ignore_missing_imports = true
