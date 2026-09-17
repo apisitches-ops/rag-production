@@ -12,6 +12,7 @@ from ragas import evaluate
 from ragas.embeddings import LangchainEmbeddingsWrapper
 from ragas.llms import LangchainLLMWrapper
 from ragas.metrics import answer_relevancy, context_precision, faithfulness
+from ragas.run_config import RunConfig
 
 from app import db
 from app.ingest import ingest_document
@@ -52,7 +53,12 @@ def _score_answered_items(answered: list[dict]) -> None:
             "ground_truth": [item["expected_answer"] for item in answered],
         }
     )
-    result_df = evaluate(dataset, metrics=TRIAD_METRICS, llm=llm, embeddings=embeddings).to_pandas()
+    # Ragas defaults to 16 concurrent calls, which overwhelms a single local
+    # Ollama instance and causes widespread TimeoutErrors instead of scores.
+    run_config = RunConfig(max_workers=2)
+    result_df = evaluate(
+        dataset, metrics=TRIAD_METRICS, llm=llm, embeddings=embeddings, run_config=run_config
+    ).to_pandas()
 
     for i, item in enumerate(answered):
         for name in TRIAD_METRIC_NAMES:
