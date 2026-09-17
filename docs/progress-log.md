@@ -71,3 +71,14 @@ Full 200-question Golden Set run, post-concurrency-fix, no errors. This is the M
 - `faithfulness` computed for only 34% of answered items in practice (updated ADR-0004 with the real rate — the earlier note said "consistently fails," which undersold how often it actually does work).
 
 **Decision:** `answer_relevancy` (0.66) and `context_precision` (weak specifically on `summary`) are the two reliably-computed metrics with the most room to improve, and both are exactly what hybrid search (BM25+RRF) and a reranker are supposed to help with — this points at hybrid search/reranker as the next feature, confirming rather than overriding the roadmap's existing next-up item.
+
+## 2026-09-17 — Manual error analysis of the baseline run
+
+Asked "how many questions did it actually get right" — a crude substring-match heuristic first said 50-54%, but manual review of every "wrong" item showed that heuristic was badly undercounting: most flagged failures were semantically correct answers in a different phrasing/format (e.g. "438,000" vs "438,000 jobs", "Two years" vs "Two-year term") — exactly why Ragas's semantic metrics (not string matching) are the numbers to trust, not a hand-rolled accuracy count.
+
+**Real bugs found by reading through actual failures, not the heuristic:**
+- **Cross-document contamination**: retrieval pulls top-5 Nodes from the *entire* 51-document corpus with no per-document scoping, so answers sometimes blend content from the wrong document even when the right document is also among the retrieved Nodes (e.g. a question about political appointees answered with names from an unrelated synthetic "rank people by age" document). Broader than the ~16/200 cases where *no* correct-document Node was retrieved at all — some "same document was cited" cases still leaked content from a co-retrieved wrong document into the generated answer.
+- **Wrong row/column in tabular data**: e.g. "cost of goods sold in 2019" answered with a different year's figure from the same table.
+- **Reasoning errors from the Dev Generator**: a self-contradictory price comparison (stated "Yes" while its own cited numbers said the opposite) and a wrong age calculation — consistent with `math_basic` already scoring lowest on faithfulness.
+
+**Decision:** these three findings (contamination, table precision, reasoning) point at a reranker as the more targeted next feature over plain hybrid search — a reranker can suppress co-retrieved wrong-document Nodes and improve which specific chunk actually gets used, which is closer to the actual failure modes found than adding BM25 alone would address.
