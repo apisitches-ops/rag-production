@@ -1,0 +1,1202 @@
+[
+  {
+    "query": "What is the total amount of the invoice?",
+    "expected_answer": "$22,500.00",
+    "category": "core",
+    "corpus_id": "00"
+  },
+  {
+    "query": "What is the invoice number?",
+    "expected_answer": "#0001",
+    "category": "core",
+    "corpus_id": "00"
+  },
+  {
+    "query": "What is a list of the items being purchased?",
+    "expected_answer": "•Front End Engineering Service;\n•Back End Engineering Service;\n•Quality Assurance Manager",
+    "category": "core",
+    "corpus_id": "00"
+  },
+  {
+    "query": "What is the name of the contact for question?",
+    "expected_answer": "Bia Hermes",
+    "category": "core",
+    "corpus_id": "00"
+  },
+  {
+    "query": "What is the PO number?",
+    "expected_answer": "#1000",
+    "category": "core",
+    "corpus_id": "00"
+  },
+  {
+    "query": "When is payment due?",
+    "expected_answer": "within 30 days of 01/01/2022",
+    "category": "core",
+    "corpus_id": "00"
+  },
+  {
+    "query": "When is payment due?",
+    "expected_answer": "May 3, 2022",
+    "category": "core",
+    "corpus_id": "01"
+  },
+  {
+    "query": "What is the subtotal amount?",
+    "expected_answer": "4150.00",
+    "category": "core",
+    "corpus_id": "01"
+  },
+  {
+    "query": "What is the total amount?",
+    "expected_answer": "4565.00",
+    "category": "core",
+    "corpus_id": "01"
+  },
+  {
+    "query": "What is a list of the purchased items?",
+    "expected_answer": "•30 Boxes of Printer Paper;\n•10 Printer Cartridges;\n•5 Laser Printers.",
+    "category": "core",
+    "corpus_id": "01"
+  },
+  {
+    "query": "What is the invoice number?",
+    "expected_answer": "234",
+    "category": "core",
+    "corpus_id": "01"
+  },
+  {
+    "query": "What is the name of the two companies?",
+    "expected_answer": "ABC Company and Delta Inc.",
+    "category": "core",
+    "corpus_id": "01"
+  },
+  {
+    "query": "How many boxes of paper are being purchased?",
+    "expected_answer": "30",
+    "category": "core",
+    "corpus_id": "01"
+  },
+  {
+    "query": "What are the payment terms?",
+    "expected_answer": "Due on Receipt",
+    "category": "core",
+    "corpus_id": "01"
+  },
+  {
+    "query": "What is the address of ABC Company?",
+    "expected_answer": "8675 River Run Road, Marlington, CT 09392",
+    "category": "core",
+    "corpus_id": "01"
+  },
+  {
+    "query": "What is the date of the invoice?",
+    "expected_answer": "March 3, 2022",
+    "category": "core",
+    "corpus_id": "01"
+  },
+  {
+    "query": "When was Biden inaugurated?",
+    "expected_answer": "January 20, 2021",
+    "category": "core",
+    "corpus_id": "02"
+  },
+  {
+    "query": "Who was Biden's opponent in the 2020 presidential election?",
+    "expected_answer": "Donald Trump",
+    "category": "core",
+    "corpus_id": "02"
+  },
+  {
+    "query": "What state is Biden from?",
+    "expected_answer": "Delaware",
+    "category": "core",
+    "corpus_id": "02"
+  },
+  {
+    "query": "Who was President when Biden was Vice President?",
+    "expected_answer": "Barack Obama",
+    "category": "core",
+    "corpus_id": "02"
+  },
+  {
+    "query": "What is a list of the three people that served as co-chairs of the COVID task force?",
+    "expected_answer": "1. former Surgeon General Vivek Murthy;\n2. former FDA commissioner David A. Kessler;\n3. Yale University's Marcella Nunez-Smith.",
+    "category": "core",
+    "corpus_id": "03"
+  },
+  {
+    "query": "Who are the two people that won elections in Georgia?",
+    "expected_answer": "Jon Ossoff and Raphael Warnock",
+    "category": "core",
+    "corpus_id": "03"
+  },
+  {
+    "query": "What is the length of Raphael Warnock's term?",
+    "expected_answer": "Two-year term",
+    "category": "core",
+    "corpus_id": "03"
+  },
+  {
+    "query": "How many national guard members were deployed on January 6?",
+    "expected_answer": "26,000",
+    "category": "core",
+    "corpus_id": "03"
+  },
+  {
+    "query": "When was the letter of ascertainment issued?",
+    "expected_answer": "November 23",
+    "category": "core",
+    "corpus_id": "03"
+  },
+  {
+    "query": "What was Microsoft's revenue in the 3rd quarter?",
+    "expected_answer": "$52.9 billion",
+    "category": "core",
+    "corpus_id": "04"
+  },
+  {
+    "query": "What was the improvement in operating income year-to-year?",
+    "expected_answer": "Increased 10%, up 15% in constant currency",
+    "category": "core",
+    "corpus_id": "04"
+  },
+  {
+    "query": "When did the quarter end?",
+    "expected_answer": "March 31, 2023",
+    "category": "core",
+    "corpus_id": "04"
+  },
+  {
+    "query": "According to the CFO, what led to the increase in cloud revenue?",
+    "expected_answer": "Focused execution by our sales teams and partners",
+    "category": "core",
+    "corpus_id": "05"
+  },
+  {
+    "query": "What was the amount of Cloud revenue in the quarter?",
+    "expected_answer": "$28.5 billion",
+    "category": "core",
+    "corpus_id": "05"
+  },
+  {
+    "query": "What was LinkedIn revenue growth in constant currency?",
+    "expected_answer": "10%",
+    "category": "core",
+    "corpus_id": "06"
+  },
+  {
+    "query": "What is the number of Microsoft 365 consumer subscribers?",
+    "expected_answer": "65.4 million",
+    "category": "core",
+    "corpus_id": "06"
+  },
+  {
+    "query": "What was the amount of total revenue in Intelligent Cloud?",
+    "expected_answer": "$22.1 billion",
+    "category": "core",
+    "corpus_id": "06"
+  },
+  {
+    "query": "When was the field of AI founded?",
+    "expected_answer": "1956",
+    "category": "core",
+    "corpus_id": "07"
+  },
+  {
+    "query": "What is the Church-Turing thesis?",
+    "expected_answer": "A machine, by shuffling symbols as simple as '0' and '1' can simulate both mathematical deduction and formal reasoning.",
+    "category": "core",
+    "corpus_id": "07"
+  },
+  {
+    "query": "When was the first paper on AI published?",
+    "expected_answer": "1943",
+    "category": "core",
+    "corpus_id": "07"
+  },
+  {
+    "query": "When was the workshop at Dartmouth?",
+    "expected_answer": "1956",
+    "category": "core",
+    "corpus_id": "07"
+  },
+  {
+    "query": "What is an AI winter?",
+    "expected_answer": "A period when obtaining funding for AI projects is difficult.",
+    "category": "core",
+    "corpus_id": "08"
+  },
+  {
+    "query": "What did Herbert Simon predict?",
+    "expected_answer": "He predicted that machines would be capable of doing any work a man can do within twenty years.",
+    "category": "core",
+    "corpus_id": "08"
+  },
+  {
+    "query": "When did the LISP machine market collapse?",
+    "expected_answer": "1987.",
+    "category": "core",
+    "corpus_id": "08"
+  },
+  {
+    "query": "What is the name of the Company?",
+    "expected_answer": "TestCo Software, Inc.",
+    "category": "core",
+    "corpus_id": "09"
+  },
+  {
+    "query": "What are the names of the two parties?",
+    "expected_answer": "Aphrodite Apollo ('Executive') and TestCo Software, Inc. ('Company')",
+    "category": "core",
+    "corpus_id": "09"
+  },
+  {
+    "query": "When will employment start?",
+    "expected_answer": "April 16, 2012.",
+    "category": "core",
+    "corpus_id": "09"
+  },
+  {
+    "query": "Who owns the intellectual property?",
+    "expected_answer": "Customer",
+    "category": "core",
+    "corpus_id": "10"
+  },
+  {
+    "query": "What is the notice period to terminate for convenience?",
+    "expected_answer": "30 days",
+    "category": "core",
+    "corpus_id": "11"
+  },
+  {
+    "query": "When can termination after a material breach occur?",
+    "expected_answer": "If the breach is not cured within 15 days of notice of the breach.",
+    "category": "core",
+    "corpus_id": "11"
+  },
+  {
+    "query": "Can the agreement be terminated?",
+    "expected_answer": "Yes, by either party with 30 days written notice.",
+    "category": "core",
+    "corpus_id": "11"
+  },
+  {
+    "query": "What is the executive's role?",
+    "expected_answer": "Senior Vice President, Event Planning ('SVP') of the Workforce Optimization Division.",
+    "category": "core",
+    "corpus_id": "12"
+  },
+  {
+    "query": "What is the executive's base salary?",
+    "expected_answer": "$200,000",
+    "category": "core",
+    "corpus_id": "13"
+  },
+  {
+    "query": "What section defines the base salary?",
+    "expected_answer": "Section 2.2",
+    "category": "core",
+    "corpus_id": "13"
+  },
+  {
+    "query": "How often will the Board review the salary?",
+    "expected_answer": "Annually",
+    "category": "core",
+    "corpus_id": "13"
+  },
+  {
+    "query": "What is the governing law?",
+    "expected_answer": "State of Massachusetts, except for Section 18(a)",
+    "category": "core",
+    "corpus_id": "14"
+  },
+  {
+    "query": "What law governs section 18(a)?",
+    "expected_answer": "State of Delaware",
+    "category": "core",
+    "corpus_id": "14"
+  },
+  {
+    "query": "What section of the agreement defines the governing law?",
+    "expected_answer": "Section 19",
+    "category": "core",
+    "corpus_id": "14"
+  },
+  {
+    "query": "What was the gain on the DOW on Friday?",
+    "expected_answer": "195.12 points",
+    "category": "core",
+    "corpus_id": "15"
+  },
+  {
+    "query": "How many new jobs were added in August?",
+    "expected_answer": "438,000 jobs",
+    "category": "core",
+    "corpus_id": "15"
+  },
+  {
+    "query": "How many jobs were predicted by economists?",
+    "expected_answer": "273,000 jobs",
+    "category": "core",
+    "corpus_id": "15"
+  },
+  {
+    "query": "What was the percentage in increase in the Nasdaq at closing?",
+    "expected_answer": "Up 1.35%",
+    "category": "core",
+    "corpus_id": "15"
+  },
+  {
+    "query": "Where does Margaret Jones work?",
+    "expected_answer": "Vibrant Industries Capital Advisors",
+    "category": "core",
+    "corpus_id": "15"
+  },
+  {
+    "query": "What is the current rate on 10-year treasuries?",
+    "expected_answer": "4.58%",
+    "category": "core",
+    "corpus_id": "15"
+  },
+  {
+    "query": "What is the CEO's salary?",
+    "expected_answer": "$350,000",
+    "category": "core",
+    "corpus_id": "16"
+  },
+  {
+    "query": "What is the stock price on Thursday?",
+    "expected_answer": "$33",
+    "category": "core",
+    "corpus_id": "17"
+  },
+  {
+    "query": "What is Bob's age?",
+    "expected_answer": "61",
+    "category": "core",
+    "corpus_id": "18"
+  },
+  {
+    "query": "What is the address of Red River Industries?",
+    "expected_answer": "One Red River Road, Stamford, Connecticut 08234",
+    "category": "core",
+    "corpus_id": "19"
+  },
+  {
+    "query": "At which company did Brian serve as head of Northeast Sales?",
+    "expected_answer": "Simmons Corp",
+    "category": "core",
+    "corpus_id": "20"
+  },
+  {
+    "query": "What is Mr. Williams role at Washtec Industries?",
+    "expected_answer": "Vice President of Sales",
+    "category": "core",
+    "corpus_id": "20"
+  },
+  {
+    "query": "What was the increase in revenue from the previous year?",
+    "expected_answer": "Up 101%",
+    "category": "core",
+    "corpus_id": "21"
+  },
+  {
+    "query": "What was the revenue in second quarter?",
+    "expected_answer": "$13.51 billion",
+    "category": "core",
+    "corpus_id": "21"
+  },
+  {
+    "query": "How many shares were repurchased in second quarter?",
+    "expected_answer": "7.5 million shares",
+    "category": "core",
+    "corpus_id": "21"
+  },
+  {
+    "query": "Who is the CEO of Nvidia?",
+    "expected_answer": "Jensen Huang",
+    "category": "core",
+    "corpus_id": "21"
+  },
+  {
+    "query": "What was the percentage increase in data center revenue compared to the first quarter?",
+    "expected_answer": "Up 141% from Q1",
+    "category": "core",
+    "corpus_id": "21"
+  },
+  {
+    "query": "What is GAAP earnings per share for the quarter?",
+    "expected_answer": "$2.48",
+    "category": "core",
+    "corpus_id": "21"
+  },
+  {
+    "query": "When will the next dividend be paid?",
+    "expected_answer": "September 28, 2023",
+    "category": "core",
+    "corpus_id": "21"
+  },
+  {
+    "query": "What is the percentage increase in non-GAAP earnings from the previous quarter?",
+    "expected_answer": "Up 148%",
+    "category": "core",
+    "corpus_id": "21"
+  },
+  {
+    "query": "Is the expected gross margin greater than 70%?",
+    "expected_answer": "Yes, between 71.5% and 72.%",
+    "category": "core",
+    "corpus_id": "22"
+  },
+  {
+    "query": "What is the expected revenue for third quarter?",
+    "expected_answer": "$16.00 billion, plus or minus 2%.",
+    "category": "core",
+    "corpus_id": "22"
+  },
+  {
+    "query": "Which new product is shipping in the quarter?",
+    "expected_answer": "NVIDIA GH200 Grace Hopper Superchip",
+    "category": "core",
+    "corpus_id": "22"
+  },
+  {
+    "query": "What is the forecast tax rate?",
+    "expected_answer": "14.5%, plus or minor 1%",
+    "category": "core",
+    "corpus_id": "22"
+  },
+  {
+    "query": "What is the amount of expected non-GAAP operating expense?",
+    "expected_answer": "$2.00 billion",
+    "category": "core",
+    "corpus_id": "22"
+  },
+  {
+    "query": "What is the amount of expected GAAP operating expense?",
+    "expected_answer": "$2.95 billion",
+    "category": "core",
+    "corpus_id": "22"
+  },
+  {
+    "query": "What was gaming revenue in the quarter?",
+    "expected_answer": "$2.49 billion",
+    "category": "core",
+    "corpus_id": "23"
+  },
+  {
+    "query": "What was professional visualization revenue in the quarter?",
+    "expected_answer": "$379 million",
+    "category": "core",
+    "corpus_id": "23"
+  },
+  {
+    "query": "What was the increase in professional visualization revenue quarter-to-quarter?",
+    "expected_answer": "Up 28%",
+    "category": "core",
+    "corpus_id": "23"
+  },
+  {
+    "query": "Which companies are participating in the Alliance for OpenUSD?",
+    "expected_answer": "Pixar, Adobe, Apple, Autodesk and NVIDIA",
+    "category": "core",
+    "corpus_id": "23"
+  },
+  {
+    "query": "How many DLSS games were added?",
+    "expected_answer": "35",
+    "category": "core",
+    "corpus_id": "23"
+  },
+  {
+    "query": "What is the lowest price for GeForce RTX 4060 family?",
+    "expected_answer": "$299",
+    "category": "core",
+    "corpus_id": "23"
+  },
+  {
+    "query": "Who is NVIDIA's partner for the driver assistance system?",
+    "expected_answer": "MediaTek",
+    "category": "core",
+    "corpus_id": "24"
+  },
+  {
+    "query": "What is the former name of LSEG?",
+    "expected_answer": "Refinitiv",
+    "category": "core",
+    "corpus_id": "25"
+  },
+  {
+    "query": "Who is the chairman of the Federal Reserve?",
+    "expected_answer": "Jerome Powell",
+    "category": "core",
+    "corpus_id": "25"
+  },
+  {
+    "query": "Which country had a trade surplus in September?",
+    "expected_answer": "Japan",
+    "category": "core",
+    "corpus_id": "26"
+  },
+  {
+    "query": "What was the decline in imports in September in Japan?",
+    "expected_answer": "Down 16.3%",
+    "category": "core",
+    "corpus_id": "26"
+  },
+  {
+    "query": "What was the trade surplus?",
+    "expected_answer": "62.4 billion yen ($416.6 million)",
+    "category": "core",
+    "corpus_id": "26"
+  },
+  {
+    "query": "What did economists expect for the trade surplus amount?",
+    "expected_answer": "Deficit of 42.5 billion yen.",
+    "category": "core",
+    "corpus_id": "26"
+  },
+  {
+    "query": "What was the increase in exports?",
+    "expected_answer": "Up 4.3%",
+    "category": "core",
+    "corpus_id": "26"
+  },
+  {
+    "query": "What was the S&P trading level one year ago?",
+    "expected_answer": "3,577",
+    "category": "core",
+    "corpus_id": "27"
+  },
+  {
+    "query": "What was the cost of living adjustment for 2024?",
+    "expected_answer": "3.2%",
+    "category": "core",
+    "corpus_id": "27"
+  },
+  {
+    "query": "What is Bank of America's rating on Target?",
+    "expected_answer": "Buy",
+    "category": "core",
+    "corpus_id": "27"
+  },
+  {
+    "query": "What is Bank of Americas' rating on Snowflake?",
+    "expected_answer": "Buy",
+    "category": "core",
+    "corpus_id": "27"
+  },
+  {
+    "query": "What is Barclay's new price target on UTZ?",
+    "expected_answer": "$16",
+    "category": "core",
+    "corpus_id": "27"
+  },
+  {
+    "query": "What was third quarter profit?",
+    "expected_answer": "133 million euros.",
+    "category": "core",
+    "corpus_id": "28"
+  },
+  {
+    "query": "What is the purchase order number?",
+    "expected_answer": "Not Found",
+    "category": "not_found_classification",
+    "corpus_id": "01"
+  },
+  {
+    "query": "Who is the EVP of Human Resources?",
+    "expected_answer": "Not Found.",
+    "category": "not_found_classification",
+    "corpus_id": "05"
+  },
+  {
+    "query": "What is the annual bonus amount?",
+    "expected_answer": "Not Found",
+    "category": "not_found_classification",
+    "corpus_id": "13"
+  },
+  {
+    "query": "What is the address of Simmons Technologies?",
+    "expected_answer": "Not Found",
+    "category": "not_found_classification",
+    "corpus_id": "29"
+  },
+  {
+    "query": "What was the amount of free cash flow in the quarter?",
+    "expected_answer": "Not Found.",
+    "category": "not_found_classification",
+    "corpus_id": "21"
+  },
+  {
+    "query": "What is the expected revenue for fourth quarter?",
+    "expected_answer": "Not Found.",
+    "category": "not_found_classification",
+    "corpus_id": "22"
+  },
+  {
+    "query": "When was the A100 chip released?",
+    "expected_answer": "Not Found.",
+    "category": "not_found_classification",
+    "corpus_id": "22"
+  },
+  {
+    "query": "What was gaming revenue for the quarter?",
+    "expected_answer": "Not Found.",
+    "category": "not_found_classification",
+    "corpus_id": "24"
+  },
+  {
+    "query": "What was third quarter revenue?",
+    "expected_answer": "Not Found.",
+    "category": "not_found_classification",
+    "corpus_id": "24"
+  },
+  {
+    "query": "What is gaming revenue for the full year FY24?",
+    "expected_answer": "Not Found",
+    "category": "not_found_classification",
+    "corpus_id": "23"
+  },
+  {
+    "query": "Who is the CEO of Netflix?",
+    "expected_answer": "Not Found.",
+    "category": "not_found_classification",
+    "corpus_id": "25"
+  },
+  {
+    "query": "What was China's trade balance in September?",
+    "expected_answer": "Not Found.",
+    "category": "not_found_classification",
+    "corpus_id": "26"
+  },
+  {
+    "query": "What was Japan's trade balance in March?",
+    "expected_answer": "Not Found.",
+    "category": "not_found_classification",
+    "corpus_id": "26"
+  },
+  {
+    "query": "What was the cost of living adjustment for 2023?",
+    "expected_answer": "Not Found",
+    "category": "not_found_classification",
+    "corpus_id": "27"
+  },
+  {
+    "query": "When is TJX reporting earnings?",
+    "expected_answer": "Not Found.",
+    "category": "not_found_classification",
+    "corpus_id": "27"
+  },
+  {
+    "query": "How many were laptops were purchased?",
+    "expected_answer": "Not Found.",
+    "category": "not_found_classification",
+    "corpus_id": "00"
+  },
+  {
+    "query": "Who is the secretary of agriculture?",
+    "expected_answer": "Not Found.",
+    "category": "not_found_classification",
+    "corpus_id": "02"
+  },
+  {
+    "query": "What is the executive's salary?",
+    "expected_answer": "Not Found.",
+    "category": "not_found_classification",
+    "corpus_id": "12"
+  },
+  {
+    "query": "What is the 4th quarter revenue of Broadcom?",
+    "expected_answer": "Not Found.",
+    "category": "not_found_classification",
+    "corpus_id": "21"
+  },
+  {
+    "query": "How old is Maribeth?",
+    "expected_answer": "Not Found.",
+    "category": "not_found_classification",
+    "corpus_id": "30"
+  },
+  {
+    "query": "Has the S&P increased over the last year?",
+    "expected_answer": "Yes, by more than 22%.",
+    "category": "boolean",
+    "corpus_id": "27"
+  },
+  {
+    "query": "Is Chipotle lowering prices?",
+    "expected_answer": "No, Chipotle is increasing prices.",
+    "category": "boolean",
+    "corpus_id": "27"
+  },
+  {
+    "query": "Is Barclay's raising its price target on KHC?",
+    "expected_answer": "No, it is lowering the target from $38 to $36.",
+    "category": "boolean",
+    "corpus_id": "27"
+  },
+  {
+    "query": "Were third quarter sales more than 5 billion euros?",
+    "expected_answer": "No.",
+    "category": "boolean",
+    "corpus_id": "28"
+  },
+  {
+    "query": "Did the trade surplus beat expectations?",
+    "expected_answer": "Yes.",
+    "category": "boolean",
+    "corpus_id": "26"
+  },
+  {
+    "query": "Did Dow Jones futures increase?",
+    "expected_answer": "No, down 73 points.",
+    "category": "boolean",
+    "corpus_id": "25"
+  },
+  {
+    "query": "Is the yield on the 10-year above 4.8%?",
+    "expected_answer": "Yes, it topped 4.9%.",
+    "category": "boolean",
+    "corpus_id": "25"
+  },
+  {
+    "query": "Did the Nasdaq Composite increase?",
+    "expected_answer": "No, it was down 1.6%.",
+    "category": "boolean",
+    "corpus_id": "25"
+  },
+  {
+    "query": "Did automotive revenue increase in the current quarter compared to last quarter?",
+    "expected_answer": "No, it was down 15% from the previous quarter.",
+    "category": "boolean",
+    "corpus_id": "24"
+  },
+  {
+    "query": "Did automotive revenue increase year-over-year?",
+    "expected_answer": "Yes, up 15%.",
+    "category": "boolean",
+    "corpus_id": "24"
+  },
+  {
+    "query": "Was automotive revenue more than $250 million?",
+    "expected_answer": "Yes",
+    "category": "boolean",
+    "corpus_id": "24"
+  },
+  {
+    "query": "Did gaming revenue decrease?",
+    "expected_answer": "No, it was up 11% quarter-to-quarter and 22% year-to-year.",
+    "category": "boolean",
+    "corpus_id": "23"
+  },
+  {
+    "query": "Did revenue increase more than 50% year-to-year?",
+    "expected_answer": "Yes, it increased 101% year-to-year.",
+    "category": "boolean",
+    "corpus_id": "21"
+  },
+  {
+    "query": "Was more than $3 billion returned to shareholders in the quarter?",
+    "expected_answer": "Yes, $3.38 billion was returned",
+    "category": "boolean",
+    "corpus_id": "21"
+  },
+  {
+    "query": "Did Windows OEM revenue increase?",
+    "expected_answer": "No, it decreased by 28%",
+    "category": "boolean",
+    "corpus_id": "22"
+  },
+  {
+    "query": "Are Nokia's products performing well in the market?",
+    "expected_answer": "No, net sales declined 20% year-on-year, and the company has described the market environment as 'challenging.'",
+    "category": "boolean",
+    "corpus_id": "28"
+  },
+  {
+    "query": "Is Nokia having trouble with sales?",
+    "expected_answer": "Yes, net sales declined 20% year-on-year.",
+    "category": "boolean",
+    "corpus_id": "28"
+  },
+  {
+    "query": "Are Japan's exports to Asia increasing?",
+    "expected_answer": "No, exports to Asia decreased for the last nine months.",
+    "category": "boolean",
+    "corpus_id": "26"
+  },
+  {
+    "query": "Are Japan's total exports increasing?",
+    "expected_answer": "Yes, by 4.3% year to year.",
+    "category": "boolean",
+    "corpus_id": "26"
+  },
+  {
+    "query": "Is the executive's base salary $250,000?",
+    "expected_answer": "No, the base salary is $200,000.",
+    "category": "boolean",
+    "corpus_id": "13"
+  },
+  {
+    "query": "If automotive revenue increases by $100 million in third quarter, what will be the amount?",
+    "expected_answer": "$353 million",
+    "category": "math_basic",
+    "corpus_id": "24"
+  },
+  {
+    "query": "If the stock increases by $2, what is the new price?",
+    "expected_answer": "$16",
+    "category": "math_basic",
+    "corpus_id": "31"
+  },
+  {
+    "query": "If the stock decreases by $3, what is the new price?",
+    "expected_answer": "$9",
+    "category": "math_basic",
+    "corpus_id": "32"
+  },
+  {
+    "query": "What is the date when the loan will expire?",
+    "expected_answer": "January 15, 2019",
+    "category": "math_basic",
+    "corpus_id": "33"
+  },
+  {
+    "query": "If the year is now 2022, how old is Bryan now?",
+    "expected_answer": "47 years old.",
+    "category": "math_basic",
+    "corpus_id": "34"
+  },
+  {
+    "query": "What is the amount of the executive's new salary?",
+    "expected_answer": "$450,000",
+    "category": "math_basic",
+    "corpus_id": "35"
+  },
+  {
+    "query": "When is the last day to pay the invoice?",
+    "expected_answer": "January 15",
+    "category": "math_basic",
+    "corpus_id": "36"
+  },
+  {
+    "query": "How many shares traded on Wednesday?",
+    "expected_answer": "2,000",
+    "category": "math_basic",
+    "corpus_id": "37"
+  },
+  {
+    "query": "If the rent increased by 50%, what is the new rental price?",
+    "expected_answer": "$1800",
+    "category": "math_basic",
+    "corpus_id": "38"
+  },
+  {
+    "query": "What is the amount of the target bonus?",
+    "expected_answer": "$100,000",
+    "category": "math_basic",
+    "corpus_id": "39"
+  },
+  {
+    "query": "What is a list of the people ranked in order of age, from oldest to youngest?",
+    "expected_answer": "1. Liam - 41;\n2. Francois - 29;\n3. Ashish - 27;\n4. Myra - 23.",
+    "category": "math_basic",
+    "corpus_id": "40"
+  },
+  {
+    "query": "Who is older - Elizabeth or John?",
+    "expected_answer": "John",
+    "category": "math_basic",
+    "corpus_id": "41"
+  },
+  {
+    "query": "Which item has the lowest price?",
+    "expected_answer": "Chocolate - $3.25",
+    "category": "math_basic",
+    "corpus_id": "42"
+  },
+  {
+    "query": "Which item has the highest price?",
+    "expected_answer": "Cheese - $6.25",
+    "category": "math_basic",
+    "corpus_id": "42"
+  },
+  {
+    "query": "Does chocolate have a higher price than coffee?",
+    "expected_answer": "No, chocolate has a lower price than coffee.",
+    "category": "math_basic",
+    "corpus_id": "43"
+  },
+  {
+    "query": "Which stock index increased by the most points yesterday?",
+    "expected_answer": "Nasdaq 100 futures, up 63 points.",
+    "category": "math_basic",
+    "corpus_id": "44"
+  },
+  {
+    "query": "Which stock index increased by the highest percentage yesterday?",
+    "expected_answer": "S&P 500 futures futures, up 1.2%.",
+    "category": "math_basic",
+    "corpus_id": "44"
+  },
+  {
+    "query": "Which stock has the highest price?",
+    "expected_answer": "River Industries - $53.",
+    "category": "math_basic",
+    "corpus_id": "45"
+  },
+  {
+    "query": "If Smithson stock increases by $2, what is the new price?",
+    "expected_answer": "$21",
+    "category": "math_basic",
+    "corpus_id": "46"
+  },
+  {
+    "query": "Which PO number has the smallest value?",
+    "expected_answer": "PO 1993",
+    "category": "math_basic",
+    "corpus_id": "47"
+  },
+  {
+    "query": "What was the amount of Cloud revenue in the quarter - (A) $52.9 billion, (B) $18.3 billion, (C) $17.5 billion, or (D) $28.5 billion?",
+    "expected_answer": "(D) $28.5 billion",
+    "category": "complex_qa",
+    "corpus_id": "48"
+  },
+  {
+    "query": "What is the name of the company - (A) Microsoft, (B) TestCo Software, (C) Aphrodite Apollo, or (D) Executive Employment Agreement?",
+    "expected_answer": "(B) TestCo Software.",
+    "category": "complex_qa",
+    "corpus_id": "09"
+  },
+  {
+    "query": "What is the price for the services of the Quality Assurance Manager - (A) $1,000, (B) $7500, (C) $22,500, or (D) $10,000?",
+    "expected_answer": "(D) $10,000.",
+    "category": "complex_qa",
+    "corpus_id": "00"
+  },
+  {
+    "query": "What was the percentage increase in diluted earnings per share in constant currency - (A) 10%, (B) 7%, (C) 14%, or (D) 15%?",
+    "expected_answer": "(C) 14%.",
+    "category": "complex_qa",
+    "corpus_id": "04"
+  },
+  {
+    "query": "What is the rate of decline in profit - (A) 20%, (B) 69%, (C) 68%, (D) 32%, or (E) 133 million?",
+    "expected_answer": "(B) 69%.",
+    "category": "complex_qa",
+    "corpus_id": "28"
+  },
+  {
+    "query": "What is a list of net sales in 2019, 2020, 2021, and 2022?",
+    "expected_answer": "•2019 - 24,578;\n•2020 - 31,536;\n•2021 - 53,823;\n•2022 - 81,462.",
+    "category": "complex_qa",
+    "corpus_id": "49"
+  },
+  {
+    "query": "What is non-operating income interest in 2022?",
+    "expected_answer": "297.",
+    "category": "complex_qa",
+    "corpus_id": "49"
+  },
+  {
+    "query": "What is Operating Income in 2021?",
+    "expected_answer": "6,496.",
+    "category": "complex_qa",
+    "corpus_id": "49"
+  },
+  {
+    "query": "What is the cost of goods sold (excluding depreciation) in 2019?",
+    "expected_answer": "18,402.",
+    "category": "complex_qa",
+    "corpus_id": "49"
+  },
+  {
+    "query": "What is the amount of pretax income in 2022?",
+    "expected_answer": "13,719",
+    "category": "complex_qa",
+    "corpus_id": "49"
+  },
+  {
+    "query": "What is a list of all of the people mentioned?",
+    "expected_answer": "•Herbert Simon;\n•Marvin Minsky;\n•Sir James Lighthill;\n•Papert.",
+    "category": "complex_qa",
+    "corpus_id": "08"
+  },
+  {
+    "query": "What is a list of Nvidia's partners mentioned in the text?",
+    "expected_answer": "•Amazon Web Services;\n•Microsoft Azure;•\nRegional Cloud Service Providers;\n•ServiceNow;\n•Accenture;\n•VMWare;\n•Snowflake;\n•WPP;\n•Softbank;\n•Hugging Face.",
+    "category": "complex_qa",
+    "corpus_id": "50"
+  },
+  {
+    "query": "What is a list of the companies that are mentioned in the text?",
+    "expected_answer": "•Tesla;\n;•Netflix;\n•KeyCorp;\n•Fifth Third;\n•Truist Financial;\n•American Airlines;\n•Union Pacific;\n•CSX.",
+    "category": "complex_qa",
+    "corpus_id": "25"
+  },
+  {
+    "query": "Which three governments are mentioned in the text?",
+    "expected_answer": "1. U.S;\n2. UK;\n3. Japan.",
+    "category": "complex_qa",
+    "corpus_id": "08"
+  },
+  {
+    "query": "Why did the intraday reversal occur?",
+    "expected_answer": "Traders were unclear of the reason, but some noted it could be the softer wage numberin the jobs report.",
+    "category": "complex_qa",
+    "corpus_id": "15"
+  },
+  {
+    "query": "Why is Nokia cutting jobs?",
+    "expected_answer": "Cost cutting plan",
+    "category": "complex_qa",
+    "corpus_id": "28"
+  },
+  {
+    "query": "Why did Tesla stock decline?",
+    "expected_answer": "The company missed expectations on earnings and revenue,and Elon Musk warned that the Cybertruck will not producepositive cash flow for more than a year.",
+    "category": "complex_qa",
+    "corpus_id": "25"
+  },
+  {
+    "query": "What events enabled the Democrats to win the Senate?",
+    "expected_answer": "The electoral victories in Georgia by Jon Ossoff and Raphael Warnock.",
+    "category": "complex_qa",
+    "corpus_id": "03"
+  },
+  {
+    "query": "Which company is located in Nevada?",
+    "expected_answer": "North Industries",
+    "category": "complex_qa",
+    "corpus_id": "29"
+  },
+  {
+    "query": "Which company is located on California Street?",
+    "expected_answer": "Blue Moon Tech.",
+    "category": "complex_qa",
+    "corpus_id": "29"
+  },
+  {
+    "query": "What are the key financial metrics for the outlook for the third quarter?",
+    "expected_answer": "•Revenue: $16.00 billion, plus or minus 2%;\n•Gross Margins: 71.5%-72.%, plus or minor 50 basis points;\n•GAAP operating expenses: $2.95 billion;\n•Non - GAAP operating expense: $2.00 billion.",
+    "category": "summary",
+    "corpus_id": "22"
+  },
+  {
+    "query": "What is a list of key points about data center performance?",
+    "expected_answer": "•Second-quarter revenue: record $10.32 billion;\n•Up 141% from previous quarter;\nUp 171% from previousyear",
+    "category": "summary",
+    "corpus_id": "22"
+  },
+  {
+    "query": "What is a list of the top 3 financial highlights for the quarter?",
+    "expected_answer": "1. Record revenue of $13.51 billion;\n2. Record Data Center revenue of $10.32 billion;\n3. GAAP earnings per diluted share of $2.48.",
+    "category": "summary",
+    "corpus_id": "21"
+  },
+  {
+    "query": "What is a list of the top summary points?",
+    "expected_answer": "•Joe Biden was inaugurated on January 20, 2021;\n•Biden is the 46th President of the United States;\n•Biden previously served as Vice President under Barack Obama;\n•Biden won the 2020 presidential election over incumbent Donald Trump;\n•Biden is the oldest president in American history.",
+    "category": "summary",
+    "corpus_id": "02"
+  },
+  {
+    "query": "What is a list of the top 5 summary points?",
+    "expected_answer": "1. General Services Administration head Emily W. Murphy initially refused to begin the transition for president-elect Biden until Michigan certified its results on November 23;\n2. Two days after becoming the projected winner, Biden announced the formation of a task forceto advise on the COVID-19 pandemic;\n3. On January 5, 2021, the Democratic Party won control of the U.S. Senate, with the electoralvictories in Georgia by Jon Ossoff and Raphael Warnock;\n4. On January 6, 2021, a mob of Trump supporters stormed the Capitol, forcing Congress to evacuateduring the counting of the Electoral Votes;\n5. For the inauguration, more than 26,000 National Guard members were deployed.",
+    "category": "summary",
+    "corpus_id": "03"
+  },
+  {
+    "query": "What is the list of the top financial highlights for the quarter?",
+    "expected_answer": "•Revenue: $52.9 million, up 10% in constant currency;\n•Operating income: $22.4 billion, up 15% in constant currency;\n•Net income: $18.3 billion, up 14% in constant currency;\n•Diluted earnings per share: $2.45 billion, up 14% in constant currency.",
+    "category": "summary",
+    "corpus_id": "21"
+  },
+  {
+    "query": "What is a list of the top 3 points?",
+    "expected_answer": "1.  The study of formal reasoning began in antiquity;\n2.  These studies led directly to Alan Turing's theory of computation, which led researchers to consider the possibility of building an 'electronic brain';\n3.  The first paper that recognized AI was published in 1943, and the field was founded in 1956.",
+    "category": "summary",
+    "corpus_id": "07"
+  },
+  {
+    "query": "What is a list of the top summary points?",
+    "expected_answer": "•In the 1960s, AI researchers produced 'astonishing' programs that could learn checkers, word problems,prove logical theorems and speak English;\n•AI research at the time was funded heavily by the U.S. Department of Defense;\n•Herbert Simon predicted that machines would be capable in 20 years of doing human work;\n•Marvin Minskey predicted that AI would be substantially solved within a generation;\n•Due to these under-estimations of the difficulty of the problem, reduced government funding, and concerns about the real-world use of neural networks, the 'AI winter' followed;\n•AI research was revived in the 1980s with expert systems, and the market for AI reached over $1 billion in 1985;\nHowever, with the collapse of the Lisp machine market in 1987, AI fell in disrepute again, and another AI winter ensued.",
+    "category": "summary",
+    "corpus_id": "08"
+  },
+  {
+    "query": "What is a list of the stock prices on Wednesday, Thursday and Friday?",
+    "expected_answer": "•Wednesday - $27;\n•Thursday - $33;\n•Friday - $36.",
+    "category": "summary",
+    "corpus_id": "17"
+  },
+  {
+    "query": "What is a headline summary in 10 words or less?",
+    "expected_answer": "Joe Biden is the 46th President of the United States.",
+    "category": "summary",
+    "corpus_id": "02"
+  },
+  {
+    "query": "What is a one-line brief description in 25 words or less?",
+    "expected_answer": "After Biden won the election, he formed a pandemic task force, the democrats won the Senate, and a mob stormed the Capital on January 6.",
+    "category": "summary",
+    "corpus_id": "03"
+  },
+  {
+    "query": "What is a list of top Microsoft product offerings?",
+    "expected_answer": "•Office Commercial Products;\n•Office Consumer Products;\n•Microsoft 365 Consumer;\n•LinkedIn;\n•Dynamics Products;\n•Server Products;\n•More Personal Computing;\n•Windows OEM;\n•Devices;\n•Windows Commercial;\n•Xbox;\n•Search and News Advertising.",
+    "category": "summary",
+    "corpus_id": "22"
+  },
+  {
+    "query": "What is a list of the key points?",
+    "expected_answer": "•Invoice Date: March 3, 2022;\\•Invoice Number: No 234;\n•From: ABC Company;\n•To: Delta Inc.;\n•Due Date: Due on Receipt;\n•Total: $4565.00.",
+    "category": "summary",
+    "corpus_id": "01"
+  },
+  {
+    "query": "What is a summary in 30 words or less?",
+    "expected_answer": "According to Microsoft's CEO and CFO, the Microsoft Cloud is the platform for choice for AI,and growing 22% year-over-year as a result of focused execution.",
+    "category": "summary",
+    "corpus_id": "05"
+  },
+  {
+    "query": "What is a list of all of the people mentioned?",
+    "expected_answer": "•Biden;\n•Emily W. Murphy;\n•Vivek Murthy;\n•David A. Kessler;\n•Marcella Nunez-Smith;\n•Jon Ossoff;\n•Raphael Warnock.",
+    "category": "summary",
+    "corpus_id": "03"
+  },
+  {
+    "query": "What is a one-line summary?",
+    "expected_answer": "Nokia is cutting 14,000 jobs as part of a cost reductionplan after reporting profits that declined 69% year-on-year.",
+    "category": "summary",
+    "corpus_id": "28"
+  },
+  {
+    "query": "What is a list of the executive's responsibilities?",
+    "expected_answer": "•Senior Vice President, Event Planning ('SVP') of Workforce Optimization Division;\n•Report to Board of Directors;\n•Devote substantially all of business time and attention to the operations of the Employer;\n•responsible for running Employer's day-to-day operations;\n•Perform faithfully, diligently and competently the duties and responsibilities of a SVP.",
+    "category": "summary",
+    "corpus_id": "12"
+  },
+  {
+    "query": "What is a headline description?",
+    "expected_answer": "NVIDIA Announces Second Quarter Fiscal 2024 Results with record revenue of $13.51 billion.",
+    "category": "summary",
+    "corpus_id": "21"
+  },
+  {
+    "query": "What is a summary of the CEO's statement in 15 words or less?",
+    "expected_answer": "Microsoft Cloud is the platform of choice for the next generation of AI.",
+    "category": "summary",
+    "corpus_id": "05"
+  },
+  {
+    "query": "What are the key terms of the invoice?",
+    "expected_answer": "•Invoice From: Services Vendor Inc.;\n•Invoice To: Alpha Inc.;\n•Total Amount: $22,500.00;\n•Payment Due: within 30 days;\n•Contact: Bia Hermes;\n•Invoice #0001;•Data: 01/01/2022.",
+    "category": "summary",
+    "corpus_id": "00"
+  }
+]
