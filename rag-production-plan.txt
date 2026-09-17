@@ -1,0 +1,128 @@
+=====================================================
+สรุปแผนโปรเจค RAG ระดับ Production (สำหรับพอร์ตสมัครงาน)
+=====================================================
+วันที่สรุป: 2026-09-17
+อ้างอิงจาก: Production-Scale-RAG-Blueprint.pdf (Sep 2026)
+และการต่อยอดจากโปรเจคเดิม ~/rag-project (Thai/English PDF RAG, CLI, LangChain+Chroma+Ollama)
+
+-----------------------------------------------------
+1. เหตุผลที่เปิดโปรเจคใหม่ (ไม่ต่อยอด rag-project เดิม)
+-----------------------------------------------------
+- อยากเปลี่ยน tech stack / โครงสร้างทั้งหมด ให้ตรงกับ production
+  pattern ตั้งแต่ต้น แทนการ retrofit บน Chroma+Ollama เดิม
+- Domain ยังคงเดิม (Thai/English financial PDF) ไม่ได้เปลี่ยน use case
+- ของเดิม (rag-project) เก็บไว้เป็น reference ไม่ลบทิ้ง เพราะมี
+  engineering notes / eval framework ที่มีค่า (77% -> 93% accuracy
+  พร้อม root-cause diagnosis)
+
+-----------------------------------------------------
+2. Tech Stack สุดท้าย
+-----------------------------------------------------
+Framework            : LlamaIndex
+Vector store+Registry: Postgres + pgvector (รวมเป็นระบบเดียว
+                        แทนการแยก Qdrant ต่างหาก เพราะ scale
+                        ของ corpus นี้ยังไม่ถึงจุดที่ต้องใช้
+                        dedicated vector DB ตาม blueprint เอง
+                        - pgvector เหมาะกับ <10-50M vectors)
+API                   : FastAPI
+Embedding             : bge-m3 ผ่าน Ollama (local, ฟรี, multilingual,
+                        proven จากโปรเจคเดิมว่าทำงานกับภาษาไทยดี)
+Generation LLM        : Cloud API (Claude/GPT) - เพื่อ native
+                        structured output + citation feature
+                        ที่ local model (llama3.1:8b) ทำได้ไม่แม่นพอ
+Reranker              : Self-host (BGE-reranker-v2-m3)
+                        - รันบน CPU/Metal ของ Mac (ไม่มี GPU NVIDIA)
+                        - latency จะสูงกว่า cloud/GPU-based
+                          (เป้าหมาย blueprint คือ ~150ms/50docs
+                          บน GPU - บน Mac คาดว่าช้ากว่านี้หลายเท่า)
+                        - แลกกับได้ประสบการณ์ตรง "deploy model
+                          inference เอง" และควบคุม pipeline ได้เต็มที่
+                        - accuracy เทียบกับ Cohere Rerank v3 ใกล้เคียงกัน
+                          ไม่ต่างกันมาก
+Observability         : Langfuse Cloud (free tier)
+                        - เลือก cloud แทน self-host เพราะ self-host
+                          ต้องรัน Postgres+ClickHouse+Redis เพิ่ม
+                          ซึ่งจะกิน RAM เกินตัวบนเครื่อง 16GB
+CI/CD                 : GitHub Actions + eval gate (deterministic
+                        IR metrics + regression check ก่อน merge)
+Container             : Docker Compose
+
+-----------------------------------------------------
+3. จุดที่เคยขาดหายไปจากการคุย - เพิ่มเข้ามาแล้ว
+-----------------------------------------------------
+Parsing       : PyMuPDF (fast path, พอสำหรับ PDF digital-native
+                เช่น PTT One Report / เพิ่ม OCR ทีหลังถ้าเจอ scanned page)
+Chunking      : Structural + parent-child ผ่าน HierarchicalNodeParser
+                ของ LlamaIndex (built-in, ตรงกับ blueprint default)
+Hybrid search : QueryFusionRetriever ของ LlamaIndex ผสม dense
+                vector + BM25 ด้วย RRF (ไม่ต้องเพิ่ม service ใหม่)
+Guardrails    : Llama Guard ผ่าน Ollama (ฟรี, local) สำหรับ
+                scan prompt injection / unsafe content
+Caching       : Redis - เริ่มแค่ exact-match cache (L0) ก่อน
+                ข้าม semantic cache ในช่วงแรกเพราะซับซ้อนเกินจำเป็น
+Eval          : Ragas สำหรับวัด RAG Triad (faithfulness,
+                answer relevance, context relevance/precision)
+
+-----------------------------------------------------
+4. Hardware check (เครื่องปัจจุบัน)
+-----------------------------------------------------
+MacBook Pro M1 Pro, 8 cores (6P+2E), RAM 16GB, ดิสก์ว่าง 262GB
+Docker: ยังไม่ได้ติดตั้ง (ต้องลง Docker Desktop ก่อนเริ่ม)
+คาดว่า RAM พอสำหรับ stack นี้ถ้าใช้ Langfuse Cloud แทน self-host
+(self-host reranker จะกิน CPU มากกว่า RAM ผลกระทบหลักคือความเร็ว
+ไม่ใช่ความจุ)
+
+-----------------------------------------------------
+5. Corpus / Golden Dataset ที่จะใช้
+-----------------------------------------------------
+(1) PTT One Report ปี 2022, 2023, 2024 (เอกสารสาธารณะ)
+    - Corpus หลัก, domain ที่ pipeline เดิม proven มาแล้ว
+    - ใช้หลายปีพร้อมกันเพื่อทดสอบ "conflicting/outdated sources"
+      (เช่น เป้าหมาย Net Zero ที่ตัวเลข/ปีอาจเปลี่ยนระหว่างฉบับ)
+    - ครอบคลุม: factoid, multi-hop, table-dependent, conflicting
+
+(2) Kaggle: RAG Financial/Legal Evaluation Dataset
+    (kaggle.com/datasets/thedevastator/rag-financial-legal-evaluation-dataset)
+    - มี Q&A pairs พร้อมใช้ ผสมเข้า eval framework เดิมได้เลย
+    - ภาษาอังกฤษล้วน - ทดสอบว่า pipeline generalize ข้าม
+      language mix ได้จริงไหม
+    - ครอบคลุม: factoid, exact-identifier
+
+(3) Synthetic mock documents (เขียนเอง 4-6 ไฟล์)
+    - จำลอง "HR Confidential" vs "All Staff" doc คนละ ACL group
+      -> ทดสอบ authorization/ACL-restricted retrieval
+    - ฝัง prompt injection payload ในเนื้อหา
+      -> ทดสอบ guardrail / adversarial resistance
+
+(4) คำถามที่ไม่มีคำตอบในเอกสาร (เขียนเอง)
+    - ทดสอบว่าระบบ "insufficient_context" / ปฏิเสธตอบได้ถูกต้อง
+      แทนที่จะเดาคำตอบ (unanswerable category)
+
+(5) ตัวเลือกเสริมถ้ามีเวลา - CUAD (สัญญาทางกฎหมาย)
+    - โครงสร้างเอกสารต่างจาก annual report สิ้นเชิง
+      (clause-based ไม่ใช่ table-based)
+    - ใช้พิสูจน์ cross-domain generalization ว่า chunker/parser
+      ไม่ได้ overfit กับ format รายงานการเงินอย่างเดียว
+
+สัดส่วน Golden Set แนะนำ (อิงจาก blueprint Section 5.3,
+ปรับสเกลลงจาก enterprise ~1000+ ข้อ เหลือ ~150-200 ข้อสำหรับพอร์ต):
+  - Single-hop factoid              30%
+  - Multi-hop / comparison          15%
+  - Table/figure-dependent          10%
+  - Exact-identifier queries        10%
+  - Unanswerable                    10-15%
+  - Conflicting/outdated sources    5%
+  - ACL-restricted                  5-10%
+  - Adversarial (injection)         5-10%
+  - Multi-turn follow-ups           5%
+
+-----------------------------------------------------
+6. ขั้นตอนถัดไป (ยังไม่ได้เริ่มลงมือ)
+-----------------------------------------------------
+[ ] ตั้งชื่อ/ที่ตั้งโปรเจคใหม่
+[ ] ติดตั้ง Docker Desktop
+[ ] Scaffold repo (FastAPI + LlamaIndex + Postgres/pgvector)
+[ ] ดาวน์โหลด PTT One Report ปีเก่า (2022, 2023) เพิ่ม
+[ ] ดาวน์โหลด Kaggle RAG Financial/Legal Evaluation Dataset
+[ ] เขียน synthetic ACL/injection test docs
+[ ] เขียน golden dataset ตามสัดส่วนข้างต้น
