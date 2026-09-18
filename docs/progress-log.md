@@ -124,3 +124,17 @@ Full 200-question Golden Set run with hybrid retrieval (ticket #12) and reranker
 **Decision:** hybrid search + reranker are not the fix for the project's most-diagnosed weakness. The next retrieval change under consideration is *document-scoped retrieval* (narrow to the likely-relevant Document before chunk-level search, rather than searching the whole corpus at once) — reasoning and cost/latency notes captured in `maybe.txt` (not yet a spec).
 
 Report: `eval/reports/2026-09-18T03:51:57.398982+00:00.json`.
+
+## 2026-09-18 — Manual error analysis of the hybrid + reranker run
+
+Same method as the baseline's manual analysis: judge every answered item by hand/LLM against `expected_answer`, ignoring phrasing/formatting differences, instead of trusting a string-match heuristic. Also, unlike the baseline pass, combined this with the report's abstention data to score all 200 items rather than just the answered ones.
+
+**Combined score across all 200 items: 141/200 (70.5%)** — a fully-correct outcome is either a substantively correct answer or a correct decision to abstain. Breaks down as: 124 correctly answered, 17 correctly abstained (`not_found_classification`), 24 answered incorrectly, 3 answered when should have abstained, and **32 abstained when the question was actually answerable** — over-refusal on answerable questions turns out to be a bigger contributor to the combined score than any single content-error pattern.
+
+**Answer-only correctness (151 answered items): 124/151 (82.1%)**, and it's extremely uneven by category — `core` 96%, `boolean`/`complex_qa` 75%, `math_basic` 69%, **`summary` 36%**.
+
+**89% of the 27 wrong answers (24/27) are cross-document contamination** — worse than the baseline's contamination finding, not better, despite the reranker shipping specifically to address it (ticket #8). Two shapes: whole-topic swaps (answer is fluent and internally consistent but about a completely different Document — concentrated almost entirely in `summary`, 9/9 of its wrong items) and single-fact swaps within an otherwise-correct answer (one number/fact from a different corpus, seen across `core`/`boolean`/`math_basic`). The remaining failures: 1 table row/column confusion (same bug shape as the baseline run) and 2 reasoning errors despite citing the correct facts.
+
+Full breakdown, category tables, and illustrative examples: `docs/eval-comparison.md`.
+
+**Decision:** this independently confirms and sharpens the same-day context_precision finding above — `summary`'s problem isn't retrieval precision at the margin, it's near-total topic contamination on broad/listy queries. Strengthens the case for document-scoped retrieval (`maybe.txt`) as the next thing to try, over any further reranker/hybrid tuning.
