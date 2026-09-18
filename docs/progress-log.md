@@ -111,6 +111,18 @@ Before wiring the reranker into retrieval, tried to reconstruct spec #8's planne
 
 **Next:** run the full 200-question Golden Set eval with both reranker + hybrid search shipped, compare against the `2026-09-17T07:54:09` baseline report.
 
+## 2026-09-18 — `daa0e10` Ticket #16: ingest `.csv` files directly, no PDF conversion
+
+`ingest_document()` dispatches extraction by file extension (`.pdf` unchanged via PyMuPDF, `.csv` via a new `csv.DictReader`-based extractor); `POST /documents` preserves the uploaded file's real extension instead of hardcoding `.pdf`. Scope was deliberately narrowed to just these two formats — LlamaIndex's `SimpleDirectoryReader` supports several more (docx, epub, hwp, ipynb, images, audio/video) out of the box, but none of them have any real use case in this project (the target corpus, PTT One Report, is always PDF), so adding them would be untested surface area with no one to use it.
+
+**Code-review fixes:** `csv.DictReader` fills missing columns with `None` and collects extra columns under a `None` key, which was getting stringified into the indexed content as literal `"key: None"` garbage — filtered out. A later review pass also caught the same bug's other shape: a fully-present-but-blank field (e.g. a CSV row like `,,`) is an empty string, not `None`, and survived the first fix's `is not None` check — tightened to a truthiness check so both cases are excluded.
+
+## 2026-09-18 — `e1ca576` Ticket #14: tag a Document with an ACL Group at ingest time
+
+`documents.acl_group` added (nullable, `NULL` = public, matching every Document ingested so far — no migration needed for existing rows). `ingest_document()` accepts and stores it; `POST /documents` accepts an optional `acl_group` form field. This ticket only makes tagging possible — every query still sees every Document regardless of `acl_group`; retrieval-side filtering by Acting Role is ticket #15, separate on purpose (ACL Group and Acting Role are two different concepts per ADR-0005, and the split keeps each ticket a demoable vertical slice).
+
+**Code-review fixes:** a blank `acl_group` form field (e.g. an HTML form left empty) was being stored as the literal empty string instead of `NULL`, which would have made that Document invisible to *every* Acting Role once #15 ships (matches neither the `NULL`-is-public case nor any real group) — normalized empty string to `None` before it reaches `ingest_document`. Also found and fixed: `docker/postgres/init.sql` only added the `acl_group` column via `CREATE TABLE IF NOT EXISTS`, a no-op on any Postgres volume that predates this change (dev machines, CI caches) — every `/documents` upload would 400 with `UndefinedColumn` hidden behind the broad exception handler, and a from-scratch `run_eval` would crash before processing a single item. Fixed with an idempotent `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` run unconditionally after the `CREATE TABLE`.
+
 ## 2026-09-18 — `2026-09-18T03:51:57` Hybrid + reranker eval run, compared against baseline
 
 Full 200-question Golden Set run with hybrid retrieval (ticket #12) and reranker (tickets #9/#10) both shipped, no errors. Took ~2h59m end to end (dominated by the Ragas scoring phase, not the answer loop — see `eval/run_eval.py`'s new per-item progress printing added this round, so the next run's timing is actually observable instead of opaque).

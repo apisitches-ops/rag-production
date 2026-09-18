@@ -88,6 +88,23 @@ def test_post_documents_ingests_uploaded_csv():
     assert len(rows) > 0
 
 
+def test_post_documents_ingests_pdf_with_extensionless_filename():
+    client = TestClient(app)
+
+    with open(FIXTURE_PDF, "rb") as f:
+        response = client.post("/documents", files={"file": ("export", f, "application/pdf")})
+
+    assert response.status_code == 200
+    document_id = response.json()["document_id"]
+
+    with psycopg.connect(DATABASE_URL) as conn:
+        rows = conn.execute(
+            "SELECT id FROM nodes WHERE document_id = %s", (document_id,)
+        ).fetchall()
+
+    assert len(rows) > 0
+
+
 def test_post_documents_rejects_unparseable_upload():
     client = TestClient(app)
 

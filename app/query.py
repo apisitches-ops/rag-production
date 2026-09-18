@@ -37,11 +37,15 @@ class Answer(TypedDict):
 
 
 # Shared by both retrievers below so a future change to candidate selection
-# (e.g. an additional filter) can't drift between the two.
+# (e.g. an additional filter) can't drift between the two. ACL filtering
+# happens here, not after retrieval, so a restricted Document's Nodes never
+# even enter the candidate pool that fusion/rerank/dedup operate on.
 _CANDIDATE_JOIN_SQL = """
     FROM nodes n
     LEFT JOIN nodes p ON p.id = n.parent_id
+    JOIN documents d ON d.id = n.document_id
     WHERE n.embedding IS NOT NULL
+      AND (d.acl_group IS NULL OR d.acl_group = %s)
 """
 
 
@@ -59,10 +63,17 @@ def _text_node(node_id: str, group_key: str, content: str) -> TextNode:
 
 
 class _DenseRetriever(BaseRetriever):
-    def __init__(self, conn: psycopg.Connection, query_embedding: list[float], limit: int) -> None:
+    def __init__(
+        self,
+        conn: psycopg.Connection,
+        query_embedding: list[float],
+        limit: int,
+        acting_role: str | None,
+    ) -> None:
         self._conn = conn
         self._query_embedding = query_embedding
         self._limit = limit
+        self._acting_role = acting_role
         super().__init__()
 
     def _retrieve(self, query_bundle: QueryBundle) -> list[NodeWithScore]:
@@ -74,7 +85,7 @@ class _DenseRetriever(BaseRetriever):
             ORDER BY dist
             LIMIT %s
             """,
-            (self._query_embedding, self._limit),
+            (self._query_embedding, self._acting_role, self._limit),
         ).fetchall()
         return [
             NodeWithScore(node=_text_node(node_id, group_key, content), score=1 - dist)
@@ -82,9 +93,12 @@ class _DenseRetriever(BaseRetriever):
         ]
 
 
-def _bm25_retriever(conn: psycopg.Connection, limit: int) -> BM25Retriever | None:
+def _bm25_retriever(
+    conn: psycopg.Connection, limit: int, acting_role: str | None
+) -> BM25Retriever | None:
     rows = conn.execute(
-        f"SELECT n.id, COALESCE(n.parent_id, n.id), COALESCE(p.content, n.content) {_CANDIDATE_JOIN_SQL}"
+        f"SELECT n.id, COALESCE(n.parent_id, n.id), COALESCE(p.content, n.content) {_CANDIDATE_JOIN_SQL}",
+        (acting_role,),
     ).fetchall()
     if not rows:
         return None
@@ -93,15 +107,15 @@ def _bm25_retriever(conn: psycopg.Connection, limit: int) -> BM25Retriever | Non
 
 
 def _fused_retrieve(
-    query: str, query_embedding: list[float], limit: int
+    query: str, query_embedding: list[float], limit: int, acting_role: str | None = None
 ) -> list[tuple[str, str, str]]:
     with psycopg.connect(db.DATABASE_URL) as conn:
         register_vector(conn)
-        bm25 = _bm25_retriever(conn, limit)
+        bm25 = _bm25_retriever(conn, limit, acting_role)
         if bm25 is None:
             return []
 
-        dense = _DenseRetriever(conn, query_embedding, limit)
+        dense = _DenseRetriever(conn, query_embedding, limit, acting_role)
         # num_queries=1 disables QueryFusionRetriever's default LLM-based
         # query expansion, so this adds no extra Dev Generator call. The
         # `llm` param is still required (unused here) — omitting it makes the
@@ -124,8 +138,10 @@ def _fused_retrieve(
     ]
 
 
-def _retrieve(query: str, query_embedding: list[float]) -> list[tuple[str, str]]:
-    rows = _fused_retrieve(query, query_embedding, RETRIEVAL_CANDIDATES)
+def _retrieve(
+    query: str, query_embedding: list[float], acting_role: str | None = None
+) -> list[tuple[str, str]]:
+    rows = _fused_retrieve(query, query_embedding, RETRIEVAL_CANDIDATES, acting_role)
 
     seen_groups: set[str] = set()
     candidates: list[tuple[str, str]] = []
@@ -161,9 +177,9 @@ def _generate(query: str, contexts: list[tuple[str, str]]) -> str:
     return text.strip()
 
 
-def answer_query(query: str) -> Answer:
+def answer_query(query: str, acting_role: str | None = None) -> Answer:
     query_embedding = embed([query])[0]
-    contexts = _retrieve(query, query_embedding)
+    contexts = _retrieve(query, query_embedding, acting_role)
     generated = _generate(query, contexts)
 
     if ABSTENTION_MARKER in generated:

@@ -1,16 +1,9 @@
-import pymupdf
 from llama_index.core.schema import MetadataMode
 
 import app.query as query_module
 from app.ingest import ingest_document
 from app.ollama import embed
-
-
-def _make_pdf(path: str, text: str) -> None:
-    doc = pymupdf.open()
-    page = doc.new_page()
-    page.insert_textbox(pymupdf.Rect(50, 50, 545, 792), text, fontsize=10)
-    doc.save(path)
+from conftest import make_pdf as _make_pdf
 
 
 def test_fused_retrieve_combines_dense_and_bm25_signals(tmp_path):

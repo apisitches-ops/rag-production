@@ -36,11 +36,12 @@ def test_ingest_document_csv_stores_parent_and_child_nodes():
     assert any(parent_id is None for parent_id, _ in rows), "expected at least one Node with no parent"
 
 
-def test_extract_csv_text_skips_missing_and_extra_fields_instead_of_stringifying_none():
+def test_extract_csv_text_skips_missing_extra_and_blank_fields():
     text = _extract_csv_text(FIXTURE_RAGGED_CSV)
 
     assert "None" not in text
     assert "extra" not in text and "fields" not in text
+    assert "id: 4" in text.splitlines(), "blank question/answer fields should be dropped, not stringified empty"
     assert "Bangkok" in text
 
 

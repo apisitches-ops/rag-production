@@ -27,6 +27,7 @@ app = FastAPI(lifespan=lifespan)
 
 class QueryRequest(BaseModel):
     query: str
+    acting_role: str | None = None
 
 
 @app.get("/health")
@@ -40,7 +41,7 @@ def health() -> JSONResponse:
 
 @app.post("/documents")
 def create_document(file: UploadFile, acl_group: str | None = Form(None)) -> JSONResponse:
-    suffix = Path(file.filename).suffix if file.filename else ".pdf"
+    suffix = (Path(file.filename).suffix if file.filename else "") or ".pdf"
     with tempfile.NamedTemporaryFile(suffix=suffix) as tmp:
         shutil.copyfileobj(file.file, tmp)
         tmp.flush()
@@ -56,7 +57,7 @@ def create_document(file: UploadFile, acl_group: str | None = Form(None)) -> JSO
 @app.post("/query")
 def query(request: QueryRequest) -> JSONResponse:
     try:
-        answer = answer_query(request.query)
+        answer = answer_query(request.query, acting_role=request.acting_role)
     except Exception:
         return JSONResponse(status_code=503, content={"detail": "could not answer query"})
     return JSONResponse(status_code=200, content=answer)

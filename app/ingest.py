@@ -20,9 +20,7 @@ def _extract_csv_text(path: str) -> str:
     with open(path, newline="", encoding="utf-8") as f:
         rows = csv.DictReader(f)
         lines = [
-            ", ".join(
-                f"{key}: {value}" for key, value in row.items() if key is not None and value is not None
-            )
+            ", ".join(f"{key}: {value}" for key, value in row.items() if key is not None and value)
             for row in rows
         ]
     return "\n".join(line for line in lines if line)
