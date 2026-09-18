@@ -49,7 +49,7 @@ def test_text_node_excludes_group_key_from_indexed_content():
     # If it isn't excluded, its hex-like characters can spuriously match a
     # query term that happens to overlap with part of the UUID.
     node = query_module._text_node(
-        "child-1", "deadbeef-face-4a3b-9c1d-0011deadface", "The quick brown fox."
+        "child-1", "The quick brown fox.", {"group_key": "deadbeef-face-4a3b-9c1d-0011deadface"}
     )
 
     assert "deadbeef" not in node.get_content(metadata_mode=MetadataMode.EMBED)

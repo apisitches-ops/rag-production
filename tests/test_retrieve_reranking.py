@@ -5,8 +5,9 @@ FIXTURE_DIR = "tests/fixtures/rerank_wiring"
 
 
 def test_retrieve_over_fetches_then_reranks_before_truncating_to_top_k(monkeypatch):
-    for i in range(6):
-        ingest_document(f"{FIXTURE_DIR}/doc_{i}.pdf", document_name=f"doc_{i}")
+    document_ids = [
+        ingest_document(f"{FIXTURE_DIR}/doc_{i}.pdf", document_name=f"doc_{i}") for i in range(6)
+    ]
 
     captured: dict = {}
 
@@ -16,6 +17,15 @@ def test_retrieve_over_fetches_then_reranks_before_truncating_to_top_k(monkeypat
         return list(reversed(candidates))
 
     monkeypatch.setattr(query_module, "rerank", fake_rerank)
+    # This test is about the over-fetch-then-rerank wiring specifically, not
+    # document-scoped retrieval (tests/test_document_scoped_retrieval.py owns
+    # that) — bypass Document narrowing so all 6 single-Node fixture Documents
+    # stay in the candidate pool, matching what this test was written to check.
+    monkeypatch.setattr(
+        query_module,
+        "_select_documents",
+        lambda query, query_embedding, acting_role, limit: document_ids,
+    )
 
     query_embedding = query_module.embed(["placeholder query"])[0]
     result = query_module._retrieve("placeholder query", query_embedding)
