@@ -1,3 +1,6 @@
+import csv
+from pathlib import Path
+
 import psycopg
 import pymupdf
 from llama_index.core import Document as LlamaDocument
@@ -8,9 +11,31 @@ from app import db
 from app.ollama import embed
 
 
-def _extract_text(path: str) -> str:
+def _extract_pdf_text(path: str) -> str:
     with pymupdf.open(path) as pdf:
         return "\n\n".join(page.get_text() for page in pdf)
+
+
+def _extract_csv_text(path: str) -> str:
+    with open(path, newline="", encoding="utf-8") as f:
+        rows = csv.DictReader(f)
+        lines = [
+            ", ".join(
+                f"{key}: {value}" for key, value in row.items() if key is not None and value is not None
+            )
+            for row in rows
+        ]
+    return "\n".join(line for line in lines if line)
+
+
+_EXTRACTORS = {".pdf": _extract_pdf_text, ".csv": _extract_csv_text}
+
+
+def _extract_text(path: str) -> str:
+    extractor = _EXTRACTORS.get(Path(path).suffix.lower())
+    if extractor is None:
+        raise ValueError(f"unsupported file extension: {path}")
+    return extractor(path)
 
 
 def ingest_document(path: str, document_name: str | None = None) -> int:

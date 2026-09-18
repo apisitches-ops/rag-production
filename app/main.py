@@ -1,6 +1,7 @@
 import shutil
 import tempfile
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import AsyncIterator
 
 from fastapi import FastAPI, UploadFile
@@ -39,7 +40,8 @@ def health() -> JSONResponse:
 
 @app.post("/documents")
 def create_document(file: UploadFile) -> JSONResponse:
-    with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
+    suffix = Path(file.filename).suffix if file.filename else ".pdf"
+    with tempfile.NamedTemporaryFile(suffix=suffix) as tmp:
         shutil.copyfileobj(file.file, tmp)
         tmp.flush()
         try:

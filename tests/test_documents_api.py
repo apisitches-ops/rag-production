@@ -5,6 +5,7 @@ from app.db import DATABASE_URL
 from app.main import app
 
 FIXTURE_PDF = "tests/fixtures/sample.pdf"
+FIXTURE_CSV = "tests/fixtures/sample.csv"
 
 
 def test_post_documents_ingests_uploaded_pdf():
@@ -26,6 +27,23 @@ def test_post_documents_ingests_uploaded_pdf():
 
     assert len(rows) > 0
     assert path == ("sample.pdf",)
+
+
+def test_post_documents_ingests_uploaded_csv():
+    client = TestClient(app)
+
+    with open(FIXTURE_CSV, "rb") as f:
+        response = client.post("/documents", files={"file": ("sample.csv", f, "text/csv")})
+
+    assert response.status_code == 200
+    document_id = response.json()["document_id"]
+
+    with psycopg.connect(DATABASE_URL) as conn:
+        rows = conn.execute(
+            "SELECT id FROM nodes WHERE document_id = %s", (document_id,)
+        ).fetchall()
+
+    assert len(rows) > 0
 
 
 def test_post_documents_rejects_unparseable_upload():
