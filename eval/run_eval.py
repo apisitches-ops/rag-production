@@ -84,11 +84,12 @@ def run_eval(golden_set_path: str, corpus_dir: str, reports_dir: str | None = No
     _ingest_corpus(corpus_dir)
 
     items = []
-    for entry in golden_set:
+    for i, entry in enumerate(golden_set):
         try:
             result = answer_query(entry["query"])
         except Exception as exc:
             items.append({**entry, "error": str(exc)})
+            print(f"[{i + 1}/{len(golden_set)}] {entry['category']}: error ({exc})", flush=True)
             continue
         items.append(
             {
@@ -103,11 +104,15 @@ def run_eval(golden_set_path: str, corpus_dir: str, reports_dir: str | None = No
                 "context_precision": None,
             }
         )
+        status = "abstained" if result["abstained"] else "answered"
+        print(f"[{i + 1}/{len(golden_set)}] {entry['category']}: {status}", flush=True)
 
     successful = [item for item in items if item["error"] is None]
     answered = [item for item in successful if not item["abstained"]]
     if answered:
+        print(f"scoring {len(answered)} answered items with Ragas...", flush=True)
         _score_answered_items(answered)
+        print("scoring done", flush=True)
 
     categories = sorted({item["category"] for item in items})
     report = {

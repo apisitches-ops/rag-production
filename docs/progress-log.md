@@ -110,3 +110,17 @@ Before wiring the reranker into retrieval, tried to reconstruct spec #8's planne
 **Code-review fixes (all verified by direct reproduction, not just inspection):** `BM25Retriever.from_defaults()` throws on an empty corpus — previously dense-only degraded gracefully to an empty result and a normal Abstention; fixed by returning `[]` early instead of letting the exception surface as an unhandled 503. The parent-id metadata carried through for dedup was leaking into the actual BM25/embedding-indexed text (via `TextNode`'s default content rendering), so a query containing a hex-like word could spuriously match a node via its parent's UUID rather than its real content — fixed with `excluded_embed_metadata_keys`/`excluded_llm_metadata_keys`. Also: unified the two retrievers onto one Postgres connection (were previously racing on separate connections against concurrent ingestion), de-duplicated their shared SQL, and disabled `QueryFusionRetriever`'s async fan-out since neither retriever is actually async — it was paying event-loop overhead for no concurrency benefit.
 
 **Next:** run the full 200-question Golden Set eval with both reranker + hybrid search shipped, compare against the `2026-09-17T07:54:09` baseline report.
+
+## 2026-09-18 — `2026-09-18T03:51:57` Hybrid + reranker eval run, compared against baseline
+
+Full 200-question Golden Set run with hybrid retrieval (ticket #12) and reranker (tickets #9/#10) both shipped, no errors. Took ~2h59m end to end (dominated by the Ragas scoring phase, not the answer loop — see `eval/run_eval.py`'s new per-item progress printing added this round, so the next run's timing is actually observable instead of opaque).
+
+**Overall:** faithfulness 0.79 (vs 0.80 baseline, flat), answer_relevancy 0.64 (vs 0.66, slightly down), context_precision 0.85 (vs 0.82, up), abstention_rate 24.5% (vs 22%), abstention_correctness 82.5% (vs 83%, flat).
+
+**The one finding that matters most: `summary` category context_precision got *worse*, not better** — 0.37 vs the baseline's already-weak 0.39. Every other category improved (core 0.91→0.93, boolean 0.87→0.90, complex_qa 0.81→0.86, math_basic 0.71→0.79, not_found_classification 0.57→0.67), which is what pulled the *overall* context_precision average up despite the actual target failure mode being untouched. Hybrid search and reranking made retrieval better where it was already working, not where it was weakest — consistent with the reasoning already recorded when `summary` was first diagnosed (dense-similarity-to-one-chunk doesn't suit "summarize the whole document" queries, and neither BM25 fusion nor reranking changes *which* chunks get considered at that scale).
+
+**Also worse:** `math_basic` faithfulness dropped 0.47→0.38, and `boolean` abstention_correctness dropped 75%→60%. Not investigated further this round — flagged here so a future regression check has a baseline to compare against.
+
+**Decision:** hybrid search + reranker are not the fix for the project's most-diagnosed weakness. The next retrieval change under consideration is *document-scoped retrieval* (narrow to the likely-relevant Document before chunk-level search, rather than searching the whole corpus at once) — reasoning and cost/latency notes captured in `maybe.txt` (not yet a spec).
+
+Report: `eval/reports/2026-09-18T03:51:57.398982+00:00.json`.
