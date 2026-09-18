@@ -6,6 +6,7 @@ from app.ingest import _extract_csv_text, ingest_document
 FIXTURE_PDF = "tests/fixtures/sample.pdf"
 FIXTURE_CSV = "tests/fixtures/sample.csv"
 FIXTURE_RAGGED_CSV = "tests/fixtures/ragged.csv"
+FIXTURE_SINGLE_COLUMN_CSV = "tests/fixtures/single_column.csv"
 
 
 def test_ingest_document_stores_parent_and_child_nodes():
@@ -43,6 +44,12 @@ def test_extract_csv_text_skips_missing_extra_and_blank_fields():
     assert "extra" not in text and "fields" not in text
     assert "id: 4" in text.splitlines(), "blank question/answer fields should be dropped, not stringified empty"
     assert "Bangkok" in text
+
+
+def test_extract_csv_text_does_not_prefix_a_single_column_csv_with_its_header():
+    text = _extract_csv_text(FIXTURE_SINGLE_COLUMN_CSV)
+
+    assert text == "PTT committed to achieving Net Zero greenhouse gas emissions by the year 2050."
 
 
 def test_ingest_document_acl_group_defaults_to_none():

@@ -1,14 +1,15 @@
 CREATE EXTENSION IF NOT EXISTS vector;
 
+-- init.sql only runs via docker-entrypoint-initdb.d against a first-time
+-- (empty) data directory — it never re-runs against an existing volume, so
+-- a schema change here can't reach a volume that predates it no matter how
+-- this file is written. Run `docker compose down -v` to pick up schema
+-- changes on an existing dev volume (see README).
 CREATE TABLE IF NOT EXISTS documents (
     id SERIAL PRIMARY KEY,
-    path TEXT NOT NULL
+    path TEXT NOT NULL,
+    acl_group TEXT
 );
-
--- init.sql only runs via docker-entrypoint-initdb.d on a first-time (empty)
--- data directory, so CREATE TABLE IF NOT EXISTS above is a no-op against any
--- volume that predates this column. This keeps existing volumes in sync too.
-ALTER TABLE documents ADD COLUMN IF NOT EXISTS acl_group TEXT;
 
 CREATE TABLE IF NOT EXISTS nodes (
     id TEXT PRIMARY KEY,

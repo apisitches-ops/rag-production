@@ -24,7 +24,7 @@ TRIAD_METRIC_NAMES = [metric.name for metric in TRIAD_METRICS]
 
 
 def _ingest_corpus(corpus_dir: str) -> None:
-    for path in sorted(Path(corpus_dir).glob("*.pdf")):
+    for path in sorted(Path(corpus_dir).glob("*.csv")):
         ingest_document(str(path), document_name=path.stem)
 
 

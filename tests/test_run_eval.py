@@ -1,8 +1,10 @@
 import eval.run_eval as run_eval_module
+from eval.build_corpus import build
 from eval.run_eval import run_eval
 
 FIXTURE_GOLDEN_SET = "tests/fixtures/eval_golden_set.json"
 FIXTURE_CORPUS_DIR = "tests/fixtures/eval_corpus"
+FIXTURE_MINI_TRAIN_CSV = "tests/fixtures/mini_train.csv"
 
 
 def test_run_eval_produces_a_structurally_correct_report():
@@ -49,3 +51,14 @@ def test_run_eval_records_per_item_errors_without_crashing(monkeypatch):
     assert len(succeeded) == 1
     # Aggregates are computed only from the successful item, not corrupted by the error
     assert report["overall"]["abstention_rate"] == 0.0
+
+
+def test_run_eval_succeeds_end_to_end_against_a_built_csv_corpus(tmp_path):
+    corpus_dir = tmp_path / "corpus"
+    golden_set_path = tmp_path / "golden_set.json"
+    build(FIXTURE_MINI_TRAIN_CSV, str(corpus_dir), str(golden_set_path))
+
+    report = run_eval(str(golden_set_path), str(corpus_dir))
+
+    assert len(report["items"]) == 1
+    assert report["items"][0]["error"] is None

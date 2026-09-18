@@ -25,6 +25,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(lifespan=lifespan)
 
 
+def _normalize_role(value: str | None) -> str | None:
+    return value.strip() or None if value else None
+
+
 class QueryRequest(BaseModel):
     query: str
     acting_role: str | None = None
@@ -47,7 +51,7 @@ def create_document(file: UploadFile, acl_group: str | None = Form(None)) -> JSO
         tmp.flush()
         try:
             document_id = ingest_document(
-                tmp.name, document_name=file.filename, acl_group=acl_group or None
+                tmp.name, document_name=file.filename, acl_group=_normalize_role(acl_group)
             )
         except Exception:
             return JSONResponse(status_code=400, content={"detail": "could not ingest file"})
@@ -57,7 +61,7 @@ def create_document(file: UploadFile, acl_group: str | None = Form(None)) -> JSO
 @app.post("/query")
 def query(request: QueryRequest) -> JSONResponse:
     try:
-        answer = answer_query(request.query, acting_role=request.acting_role)
+        answer = answer_query(request.query, acting_role=_normalize_role(request.acting_role))
     except Exception:
         return JSONResponse(status_code=503, content={"detail": "could not answer query"})
     return JSONResponse(status_code=200, content=answer)

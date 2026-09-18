@@ -1,43 +1,6 @@
 import csv
-import html
 import json
 import os
-import re
-import unicodedata
-
-import pymupdf
-
-PAGE_RECT = pymupdf.paper_rect("a4")
-MARGIN = 50
-
-
-def _content_rect() -> pymupdf.Rect:
-    return pymupdf.Rect(MARGIN, MARGIN, PAGE_RECT.width - MARGIN, PAGE_RECT.height - MARGIN)
-
-
-def _write_pdf(text: str, path: str) -> None:
-    with pymupdf.open() as doc:
-        page = doc.new_page(width=PAGE_RECT.width, height=PAGE_RECT.height)
-        escaped = html.escape(text).replace("\n", "<br>")
-        page.insert_htmlbox(_content_rect(), escaped)
-        doc.save(path)
-
-
-def _normalize(text: str) -> str:
-    # Line-wrapping can insert a space right after a hyphen (e.g. "AI-powered"
-    # -> "AI- powered") without losing any content; collapse that specific
-    # pattern instead of stripping all whitespace, which would also hide a
-    # real bug that merges two separate words together (e.g. "New York" ->
-    # "NewYork").
-    text = re.sub(r"-\s+", "-", unicodedata.normalize("NFKD", text))
-    return " ".join(text.split())
-
-
-def _verify_roundtrip(path: str, source_text: str) -> None:
-    with pymupdf.open(path) as pdf:
-        extracted = "\n\n".join(page.get_text() for page in pdf)
-    if _normalize(extracted) != _normalize(source_text):
-        raise RuntimeError(f"round-trip check failed for {path}")
 
 
 def _group_by_context(rows: list[dict[str, str]]) -> dict[str, list[dict[str, str]]]:
@@ -45,6 +8,13 @@ def _group_by_context(rows: list[dict[str, str]]) -> dict[str, list[dict[str, st
     for row in rows:
         groups.setdefault(row["context"], []).append(row)
     return groups
+
+
+def _write_csv(text: str, path: str) -> None:
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["content"])
+        writer.writerow([text])
 
 
 def build(csv_path: str, corpus_dir: str, golden_set_path: str) -> None:
@@ -56,9 +26,7 @@ def build(csv_path: str, corpus_dir: str, golden_set_path: str) -> None:
 
     os.makedirs(corpus_dir, exist_ok=True)
     for context, corpus_id in corpus_id_by_context.items():
-        pdf_path = os.path.join(corpus_dir, f"{corpus_id}.pdf")
-        _write_pdf(context, pdf_path)
-        _verify_roundtrip(pdf_path, context)
+        _write_csv(context, os.path.join(corpus_dir, f"{corpus_id}.csv"))
 
     golden_set = [
         {

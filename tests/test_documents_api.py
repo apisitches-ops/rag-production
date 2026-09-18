@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 
 from app.db import DATABASE_URL
 from app.main import app
+from conftest import node_ids_for
 
 FIXTURE_PDF = "tests/fixtures/sample.pdf"
 FIXTURE_CSV = "tests/fixtures/sample.csv"
@@ -71,6 +72,27 @@ def test_post_documents_normalizes_empty_acl_group_to_none():
     assert acl_group == (None,)
 
 
+def test_post_documents_normalizes_whitespace_only_acl_group_to_none():
+    client = TestClient(app)
+
+    with open(FIXTURE_PDF, "rb") as f:
+        response = client.post(
+            "/documents",
+            files={"file": ("sample.pdf", f, "application/pdf")},
+            data={"acl_group": "  "},
+        )
+
+    assert response.status_code == 200
+    document_id = response.json()["document_id"]
+
+    with psycopg.connect(DATABASE_URL) as conn:
+        acl_group = conn.execute(
+            "SELECT acl_group FROM documents WHERE id = %s", (document_id,)
+        ).fetchone()
+
+    assert acl_group == (None,)
+
+
 def test_post_documents_ingests_uploaded_csv():
     client = TestClient(app)
 
@@ -80,12 +102,7 @@ def test_post_documents_ingests_uploaded_csv():
     assert response.status_code == 200
     document_id = response.json()["document_id"]
 
-    with psycopg.connect(DATABASE_URL) as conn:
-        rows = conn.execute(
-            "SELECT id FROM nodes WHERE document_id = %s", (document_id,)
-        ).fetchall()
-
-    assert len(rows) > 0
+    assert len(node_ids_for(document_id)) > 0
 
 
 def test_post_documents_ingests_pdf_with_extensionless_filename():
@@ -97,12 +114,7 @@ def test_post_documents_ingests_pdf_with_extensionless_filename():
     assert response.status_code == 200
     document_id = response.json()["document_id"]
 
-    with psycopg.connect(DATABASE_URL) as conn:
-        rows = conn.execute(
-            "SELECT id FROM nodes WHERE document_id = %s", (document_id,)
-        ).fetchall()
-
-    assert len(rows) > 0
+    assert len(node_ids_for(document_id)) > 0
 
 
 def test_post_documents_rejects_unparseable_upload():

@@ -18,11 +18,22 @@ def _extract_pdf_text(path: str) -> str:
 
 def _extract_csv_text(path: str) -> str:
     with open(path, newline="", encoding="utf-8") as f:
-        rows = csv.DictReader(f)
-        lines = [
-            ", ".join(f"{key}: {value}" for key, value in row.items() if key is not None and value)
-            for row in rows
-        ]
+        reader = csv.DictReader(f)
+        fieldnames = reader.fieldnames or []
+        rows = list(reader)
+
+    # A single-column CSV *is* its content — prefixing every line with the
+    # column name (e.g. "content: ...") would silently drift the indexed
+    # text away from the source, which matters for eval/build_corpus.py's
+    # one-column-per-Document format specifically.
+    if len(fieldnames) == 1:
+        (only_key,) = fieldnames
+        return "\n".join(row[only_key] for row in rows if row.get(only_key))
+
+    lines = [
+        ", ".join(f"{key}: {value}" for key, value in row.items() if key is not None and value)
+        for row in rows
+    ]
     return "\n".join(line for line in lines if line)
 
 
