@@ -42,3 +42,25 @@ def test_extract_csv_text_skips_missing_and_extra_fields_instead_of_stringifying
     assert "None" not in text
     assert "extra" not in text and "fields" not in text
     assert "Bangkok" in text
+
+
+def test_ingest_document_acl_group_defaults_to_none():
+    document_id = ingest_document(FIXTURE_PDF)
+
+    with psycopg.connect(DATABASE_URL) as conn:
+        row = conn.execute(
+            "SELECT acl_group FROM documents WHERE id = %s", (document_id,)
+        ).fetchone()
+
+    assert row == (None,)
+
+
+def test_ingest_document_stores_acl_group():
+    document_id = ingest_document(FIXTURE_PDF, acl_group="finance")
+
+    with psycopg.connect(DATABASE_URL) as conn:
+        row = conn.execute(
+            "SELECT acl_group FROM documents WHERE id = %s", (document_id,)
+        ).fetchone()
+
+    assert row == ("finance",)

@@ -2,7 +2,8 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 CREATE TABLE IF NOT EXISTS documents (
     id SERIAL PRIMARY KEY,
-    path TEXT NOT NULL
+    path TEXT NOT NULL,
+    acl_group TEXT
 );
 
 CREATE TABLE IF NOT EXISTS nodes (

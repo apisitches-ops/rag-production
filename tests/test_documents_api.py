@@ -29,6 +29,48 @@ def test_post_documents_ingests_uploaded_pdf():
     assert path == ("sample.pdf",)
 
 
+def test_post_documents_stores_acl_group():
+    client = TestClient(app)
+
+    with open(FIXTURE_PDF, "rb") as f:
+        response = client.post(
+            "/documents",
+            files={"file": ("sample.pdf", f, "application/pdf")},
+            data={"acl_group": "finance"},
+        )
+
+    assert response.status_code == 200
+    document_id = response.json()["document_id"]
+
+    with psycopg.connect(DATABASE_URL) as conn:
+        acl_group = conn.execute(
+            "SELECT acl_group FROM documents WHERE id = %s", (document_id,)
+        ).fetchone()
+
+    assert acl_group == ("finance",)
+
+
+def test_post_documents_normalizes_empty_acl_group_to_none():
+    client = TestClient(app)
+
+    with open(FIXTURE_PDF, "rb") as f:
+        response = client.post(
+            "/documents",
+            files={"file": ("sample.pdf", f, "application/pdf")},
+            data={"acl_group": ""},
+        )
+
+    assert response.status_code == 200
+    document_id = response.json()["document_id"]
+
+    with psycopg.connect(DATABASE_URL) as conn:
+        acl_group = conn.execute(
+            "SELECT acl_group FROM documents WHERE id = %s", (document_id,)
+        ).fetchone()
+
+    assert acl_group == (None,)
+
+
 def test_post_documents_ingests_uploaded_csv():
     client = TestClient(app)
 

@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncIterator
 
-from fastapi import FastAPI, UploadFile
+from fastapi import FastAPI, Form, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
@@ -39,13 +39,15 @@ def health() -> JSONResponse:
 
 
 @app.post("/documents")
-def create_document(file: UploadFile) -> JSONResponse:
+def create_document(file: UploadFile, acl_group: str | None = Form(None)) -> JSONResponse:
     suffix = Path(file.filename).suffix if file.filename else ".pdf"
     with tempfile.NamedTemporaryFile(suffix=suffix) as tmp:
         shutil.copyfileobj(file.file, tmp)
         tmp.flush()
         try:
-            document_id = ingest_document(tmp.name, document_name=file.filename)
+            document_id = ingest_document(
+                tmp.name, document_name=file.filename, acl_group=acl_group or None
+            )
         except Exception:
             return JSONResponse(status_code=400, content={"detail": "could not ingest file"})
     return JSONResponse(status_code=200, content={"document_id": document_id})

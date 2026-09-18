@@ -38,7 +38,9 @@ def _extract_text(path: str) -> str:
     return extractor(path)
 
 
-def ingest_document(path: str, document_name: str | None = None) -> int:
+def ingest_document(
+    path: str, document_name: str | None = None, acl_group: str | None = None
+) -> int:
     text = _extract_text(path)
     document = LlamaDocument(text=text)
     parser = HierarchicalNodeParser.from_defaults(chunk_sizes=[512, 128])
@@ -53,8 +55,8 @@ def ingest_document(path: str, document_name: str | None = None) -> int:
         register_vector(conn)
 
         row = conn.execute(
-            "INSERT INTO documents (path) VALUES (%s) RETURNING id",
-            (document_name or path,),
+            "INSERT INTO documents (path, acl_group) VALUES (%s, %s) RETURNING id",
+            (document_name or path, acl_group),
         ).fetchone()
         assert row is not None
         document_id: int = row[0]
