@@ -21,6 +21,7 @@ dependencies = [
     "huggingface_hub>=0.24",
     "llama-index-retrievers-bm25>=0.3",
     "llama-index-llms-ollama>=0.5",
+    "redis>=5.0",
 ]
 
 [project.optional-dependencies]

@@ -2,6 +2,8 @@ import os
 
 import psycopg
 
+from app import cache
+
 DATABASE_URL = os.environ["DATABASE_URL"]
 
 
@@ -13,3 +15,4 @@ def check_connection() -> None:
 def reset() -> None:
     with psycopg.connect(DATABASE_URL) as conn:
         conn.execute("TRUNCATE nodes, documents RESTART IDENTITY CASCADE")
+    cache.clear()

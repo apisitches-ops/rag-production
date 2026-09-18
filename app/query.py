@@ -9,6 +9,7 @@ from pgvector.psycopg import register_vector
 from typing_extensions import TypedDict
 
 from app import db
+from app.cache import get_cached_answer, set_cached_answer
 from app.ollama import embed
 from app.reranker import rerank
 
@@ -178,16 +179,23 @@ def _generate(query: str, contexts: list[tuple[str, str]]) -> str:
 
 
 def answer_query(query: str, acting_role: str | None = None) -> Answer:
+    cached = get_cached_answer(query, acting_role)
+    if cached is not None:
+        return cached
+
     query_embedding = embed([query])[0]
     contexts = _retrieve(query, query_embedding, acting_role)
     generated = _generate(query, contexts)
 
     if ABSTENTION_MARKER in generated:
-        return Answer(answer=ABSTENTION_MESSAGE, citations=[], contexts=[], abstained=True)
+        answer = Answer(answer=ABSTENTION_MESSAGE, citations=[], contexts=[], abstained=True)
+    else:
+        answer = Answer(
+            answer=generated,
+            citations=[node_id for node_id, _ in contexts],
+            contexts=[content for _, content in contexts],
+            abstained=False,
+        )
 
-    return Answer(
-        answer=generated,
-        citations=[node_id for node_id, _ in contexts],
-        contexts=[content for _, content in contexts],
-        abstained=False,
-    )
+    set_cached_answer(query, acting_role, answer)
+    return answer

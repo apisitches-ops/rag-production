@@ -7,7 +7,7 @@ from llama_index.core import Document as LlamaDocument
 from llama_index.core.node_parser import HierarchicalNodeParser, get_leaf_nodes
 from pgvector.psycopg import register_vector
 
-from app import db
+from app import cache, db
 from app.ollama import embed
 
 
@@ -91,5 +91,10 @@ def ingest_document(
                 if node.parent_node is not None
             ],
         )
+
+    # A newly ingested Document can change the answer to any previously-cached
+    # query, not just ones about to be re-asked — clear rather than try to
+    # target which cache entries are now stale.
+    cache.clear()
 
     return document_id
