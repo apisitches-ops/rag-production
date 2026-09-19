@@ -3,11 +3,20 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 from statistics import mean
+from typing import Any, List, Optional
 
 import pandas as pd
 from datasets import Dataset
-from langchain_community.chat_models import ChatOllama
-from langchain_community.embeddings import OllamaEmbeddings
+# VoyageEmbeddings here (not the newer langchain-voyageai package) because no
+# version of langchain-voyageai supports this project's pinned
+# langchain-core==0.2.43 (0.1.x needs <0.2, 0.1.4+ needs >=0.3.29) — accepted
+# deprecation warning rather than upgrading langchain-core and risking the
+# Ragas import breakage ADR/progress-log already pinned around.
+from langchain_community.embeddings import VoyageEmbeddings
+from langchain_core.callbacks import AsyncCallbackManagerForLLMRun, CallbackManagerForLLMRun
+from langchain_core.messages import BaseMessage
+from langchain_core.outputs import ChatResult
+from langchain_google_genai import ChatGoogleGenerativeAI
 from ragas import evaluate
 from ragas.embeddings import LangchainEmbeddingsWrapper
 from ragas.llms import LangchainLLMWrapper
@@ -15,20 +24,44 @@ from ragas.metrics import answer_relevancy, context_precision, faithfulness
 from ragas.run_config import RunConfig
 
 from app import db
+from app.embeddings import EMBED_MODEL
+from app.generator import GENERATOR_MODEL
 from app.ingest import ingest_document
 from app.query import answer_query
 
 TRIAD_METRICS = [faithfulness, answer_relevancy, context_precision]
 TRIAD_METRIC_NAMES = [metric.name for metric in TRIAD_METRICS]
-# The Ragas judge's own LLM and embedding model — deliberately not the
-# pipeline's own generator (app/generator.py, now Gemini per ticket #26) or
-# embedding model (app/embeddings.py, now Voyage AI per ticket #24). The
-# judge stays on the old Ollama stack until ticket #27 swaps it to
-# Gemini + Voyage AI; reusing the pipeline's constants here would either
-# pass a Gemini model name to ChatOllama or a Voyage name to
-# OllamaEmbeddings and break scoring.
-JUDGE_LLM_MODEL = "llama3.1:8b"
-JUDGE_EMBED_MODEL = "bge-m3"
+
+
+class _JudgeLLM(ChatGoogleGenerativeAI):
+    """Ragas's LangchainLLMWrapper always passes a per-call `temperature`
+    override (ragas/llms/base.py's generate_text/agenerate_text). This
+    langchain-google-genai version (pinned to 1.0.10 — see the pyproject.toml
+    comment) forwards that kwarg straight into the low-level
+    GenerativeServiceClient.generate_content(), which doesn't accept it,
+    raising TypeError on every call. Dropping it here and relying on the
+    temperature set at construction (0, for deterministic judging) is
+    equivalent for this project's only use of temperature."""
+
+    def _generate(
+        self,
+        messages: List[BaseMessage],
+        stop: Optional[List[str]] = None,
+        run_manager: Optional[CallbackManagerForLLMRun] = None,
+        **kwargs: Any,
+    ) -> ChatResult:
+        kwargs.pop("temperature", None)
+        return super()._generate(messages, stop=stop, run_manager=run_manager, **kwargs)
+
+    async def _agenerate(
+        self,
+        messages: List[BaseMessage],
+        stop: Optional[List[str]] = None,
+        run_manager: Optional[AsyncCallbackManagerForLLMRun] = None,
+        **kwargs: Any,
+    ) -> ChatResult:
+        kwargs.pop("temperature", None)
+        return await super()._agenerate(messages, stop=stop, run_manager=run_manager, **kwargs)
 
 
 def _ingest_corpus(corpus_dir: str) -> None:
@@ -50,8 +83,31 @@ def _should_abstain(item: dict) -> bool:
 
 
 def _score_answered_items(answered: list[dict]) -> None:
-    llm = LangchainLLMWrapper(ChatOllama(model=JUDGE_LLM_MODEL, temperature=0))
-    embeddings = LangchainEmbeddingsWrapper(OllamaEmbeddings(model=JUDGE_EMBED_MODEL))
+    # Judge and pipeline intentionally share the same models now (ticket #27
+    # — see #22's "provider consistency" Implementation Decision). Before
+    # #26, the judge had to be decoupled onto separate JUDGE_LLM_MODEL/
+    # JUDGE_EMBED_MODEL constants because the pipeline was still on Ollama —
+    # that decoupling no longer serves any purpose now both sides are
+    # Gemini/Voyage AI, so it was removed rather than kept as dead
+    # indirection.
+    #
+    # Both constructors work fine at runtime with only these kwargs (their
+    # other fields have pydantic defaults) — mypy's synthesized signatures
+    # for these two packages don't reflect that, hence the ignores below.
+    llm = LangchainLLMWrapper(
+        _JudgeLLM(  # type: ignore[call-arg]
+            model=GENERATOR_MODEL, temperature=0, google_api_key=os.environ["GEMINI_API_KEY"]
+        )
+    )
+    # max_retries: the judge's embedding calls compete for the same rate-
+    # limited Voyage AI account (3 RPM, no payment method on file — see
+    # app/embeddings.py) as the pipeline's own ingest/query embedding calls
+    # that just ran. The default of 6 retries capped at a 10s wait wasn't
+    # enough to reliably survive that — same deviation already accepted for
+    # app/embeddings.py in ticket #24.
+    embeddings = LangchainEmbeddingsWrapper(
+        VoyageEmbeddings(model=EMBED_MODEL, max_retries=10)  # type: ignore[call-arg]
+    )
 
     dataset = Dataset.from_dict(
         {
@@ -61,8 +117,11 @@ def _score_answered_items(answered: list[dict]) -> None:
             "ground_truth": [item["expected_answer"] for item in answered],
         }
     )
-    # Ragas defaults to 16 concurrent calls, which overwhelms a single local
-    # Ollama instance and causes widespread TimeoutErrors instead of scores.
+    # Ragas defaults to 16 concurrent calls. Originally lowered because that
+    # overwhelmed a single local Ollama instance; kept low now that the judge
+    # is Gemini + Voyage AI (ticket #27) since the Voyage AI dev account is
+    # separately capped at 3 RPM (see app/embeddings.py) — high concurrency
+    # here would just produce widespread RateLimitErrors instead of scores.
     run_config = RunConfig(max_workers=2)
     result_df = evaluate(
         dataset, metrics=TRIAD_METRICS, llm=llm, embeddings=embeddings, run_config=run_config

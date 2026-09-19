@@ -14,6 +14,10 @@ dependencies = [
     "typing-extensions>=4.12",
     "ragas==0.1.21",
     "langchain-community==0.2.19",
+    # Pinned to the last version compatible with the langchain-core 0.2.x
+    # line langchain-community==0.2.19 above requires (4.x+ needs
+    # langchain-core>=1.6, a breaking upgrade this project isn't pinned for).
+    "langchain-google-genai==1.0.10",
     "datasets>=2.19",
     "pandas>=2.0",
     "llama-index-retrievers-bm25>=0.3",
