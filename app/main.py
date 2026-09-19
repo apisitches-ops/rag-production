@@ -1,8 +1,6 @@
 import shutil
 import tempfile
-from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import AsyncIterator
 
 from fastapi import FastAPI, Form, UploadFile
 from fastapi.responses import JSONResponse
@@ -11,18 +9,8 @@ from pydantic import BaseModel
 from app.db import check_connection
 from app.ingest import ingest_document
 from app.query import answer_query
-from app.reranker import warm_up
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    # Load the reranker model at startup, not on the first real request —
-    # otherwise the first /query call blocks on a multi-GB download.
-    warm_up()
-    yield
-
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 
 def _normalize_role(value: str | None) -> str | None:

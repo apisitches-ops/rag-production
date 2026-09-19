@@ -204,3 +204,15 @@ New `app/embeddings.py` (replaces `app/ollama.py`) calls Voyage AI's `voyage-3` 
 - **Scope note, not a bug:** `eval/run_eval.py`'s Ragas judge used to build its embeddings wrapper from the pipeline's `EMBED_MODEL` constant — now `"voyage-3"`, which would silently break `OllamaEmbeddings`. Decoupled into a local `JUDGE_EMBED_MODEL = "bge-m3"` so the judge (ticket #27's job to swap) keeps working exactly as before; code review confirmed this is in-scope, not scope creep.
 
 **Next:** ticket #25 (reranker → Voyage rerank) or #26 (generator → Gemini) — both still unblocked, independent of each other and of #24.
+
+## 2026-09-19 — Ticket #25: reranker provider swap (Voyage AI rerank)
+
+`app/reranker.py` calls Voyage AI's `rerank-2` instead of the self-hosted ONNX BGE-reranker-v2-m3 — same `rerank()` signature, so `_retrieve()` needed no changes. Lazy singleton client behind a lock, same pattern as #24's fix (and #24's own `_get_client()`) — avoids repeating the import-time-crash bug found in #24's code review. Explicitly re-sorts by `relevance_score` rather than trusting the API's own result order. `warm_up()`/the FastAPI `lifespan` hook removed entirely (nothing else used it), along with the now-unused `optimum`/`transformers`/`huggingface_hub` dependencies and their mypy overrides.
+
+Unlike #24, **no retry/backoff was added** — this ticket's own acceptance criteria explicitly say "no new fallback/resilience logic," and the rerank endpoint didn't hit the 3 RPM wall the embed endpoint did (existing reranker tests ran in ~1.4s, no rate-limit errors). `voyageai.Client()` here intentionally uses SDK defaults, unlike `app/embeddings.py`'s `max_retries=10` — the two modules disagree on retry policy on purpose, not by oversight.
+
+**Code-review (`mattpocock-skills:code-review`, Standards + Spec axes):** Spec axis found nothing — every AC met, no scope creep, lazy-init correctly avoided repeating #24's bug. Standards axis flagged one real gap (fixed): `rerank-2` had no version-pin comment, unlike the removed ONNX build's pinned `MODEL_REVISION` — added a comment explaining Voyage's hosted models aren't exposed as pinnable snapshots, so there's nothing to pin. Also flagged, correctly deferred to #28 (not this ticket's scope): ADR-0003's local-inference rationale and README's setup/architecture description are now stale for the reranker.
+
+**Gemini budget note:** the user has a hard cap of ~500 Gemini requests before quota reset, and wants dev/test work for #26+#27 combined to stay under ~200 of that, saving the rest for the eventual real eval run (~880 requests estimated for one full Golden Set pass with Gemini as both generator and judge). This ticket (#25) used zero Gemini requests — Voyage-only.
+
+**Next:** ticket #26 (generator → Gemini) or #27 (Ragas judge → Gemini + Voyage) — budget-conscious this round; minimize redundant full-suite reruns compared to #24/#25's pattern.
