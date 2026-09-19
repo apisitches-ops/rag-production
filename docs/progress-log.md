@@ -278,3 +278,17 @@ Found by hand, not by eval: uploading a real PTT One Report 2024 excerpt through
 Full `pytest` suite not run to completion this round — stalled for 15+ minutes on the same Voyage 3 RPM free-tier limit (many test files' cumulative `embed()` calls exceed 3/minute), unrelated to this change. Ran the directly-affected suites individually instead (`test_ingest.py` 7/7, `test_generator.py` 1/1, `test_query.py` 3/3, all real Postgres/real Generator) plus `mypy` on every changed file — both clean.
 
 **Next:** #34 — rerun the Golden Set (Eval Gate) against the current baseline, and manually re-confirm the original PTT One Report question now answers 6.8 (or abstains on that figure) instead of 6.3.
+
+## 2026-09-20 06:58 — `2598378` Correction: #32/#33's fix didn't actually work
+
+**Found by manual re-testing, not by the automated tests above.** After re-ingesting the PTT One Report excerpt and re-asking the original question through the local testing UI, the answer was still 6.3 — identical to the pre-fix bug. The Node-overlap increase (#32) and the "don't guess a truncated number" prompt instruction (#33) were both real, tested, committed changes, but neither one addressed what was actually happening.
+
+**Corrected root cause**, found by fetching the real `contexts` array from `POST /query` directly rather than reasoning about it: `_build_prompt()` (`app/generator.py`) joined Retrieved Context excerpts with a bare `"\n\n"`. Two *unrelated* excerpts can each be truncated at their own Node boundary independently — in this case, one excerpt ended `"...ที่เฉลี่ยที่ระดับ 6."` and the very next excerpt in the reranked set (about global oil demand growth, a different topic entirely, itself truncated at its own start) began `"3 ล้านบาร์เรลต่อวัน..."`. Joined with nothing between them, the Generator read across that seam and produced `"6.3"` — a real digit borrowed from a completely unrelated excerpt, not a hallucinated one from the model's own imagination. This is a different failure mode from what #31/#32/#33 assumed (a single Node's own fact getting cut off), and neither shipped fix touched it.
+
+**Fix:** each excerpt is now labeled (`[Excerpt N]`) and separated by an explicit marker, with prompt guidance not to read across excerpt boundaries or borrow digits between them. Re-verified directly against the original repro question, several phrasings (to dodge the answer cache masking a fluke) — all now abstain honestly rather than fabricating a value, since the true 6.8 figure still isn't fully present in any single retrieved excerpt (the underlying Node-splitting issue #32 targeted isn't fully solved — chunk_overlap hits the library's hard maximum of 127 tokens on this real document without keeping the fact intact, a separate, harder problem not solved by this round).
+
+TDD as before (`tests/test_generator.py`, one new red→green test at the same seam), `mypy` clean, `tests/test_query.py` re-run with no regression.
+
+**Adjustment:** #33's ticket and #31 both got a correction comment on GitHub rather than editing history — the original diagnosis was wrong, not just incomplete, and that's worth being visible rather than silently overwritten.
+
+**Next:** #34 still open — but its acceptance criteria (Eval Gate rerun, manual repro now answering 6.8) need re-checking against this corrected understanding: the honest outcome for the exact reported question is abstention, not necessarily 6.8, unless the deeper Node-splitting problem also gets solved.
