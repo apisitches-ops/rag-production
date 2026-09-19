@@ -52,7 +52,17 @@ def ingest_document(
 ) -> int:
     text = _extract_text(path)
     document = LlamaDocument(text=text)
-    parser = HierarchicalNodeParser.from_defaults(chunk_sizes=[512, 128])
+    # chunk_overlap=30, up from the library's implicit default of 20 — a
+    # numeric fact landing exactly on a Node boundary was reaching the
+    # Generator truncated (e.g. "6.8" split into a Node ending "...6." and a
+    # sibling Node starting "8...", with parent-widening unable to recover
+    # it since the parent's own boundary coincided with the child's; #31).
+    # Kept modest rather than doubling it (e.g. 80) because chunk_overlap is
+    # shared across both hierarchy levels here — a value sized for the
+    # 512-token parent would be a large fraction of the 128-token leaf,
+    # roughly doubling leaf Node count and Voyage AI embedding calls per
+    # Document, which compounds the free-tier 3 RPM rate limit.
+    parser = HierarchicalNodeParser.from_defaults(chunk_sizes=[512, 128], chunk_overlap=30)
     nodes = parser.get_nodes_from_documents([document])
 
     leaf_ids = {node.node_id for node in get_leaf_nodes(nodes)}

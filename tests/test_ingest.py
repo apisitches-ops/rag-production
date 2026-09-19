@@ -1,3 +1,5 @@
+import csv
+
 import psycopg
 
 from app.db import DATABASE_URL
@@ -72,3 +74,38 @@ def test_ingest_document_stores_acl_group():
         ).fetchone()
 
     assert row == ("finance",)
+
+
+def test_ingest_document_node_overlap_keeps_a_boundary_straddling_fact_intact(tmp_path):
+    # This exact filler length was found empirically to land a Node boundary
+    # right between "4." and "9 dollars" at chunk_overlap=20 (the library's
+    # implicit default) — reproducing the real bug (#31): a numeric fact
+    # split across Nodes, with no Node containing it whole.
+    fact_sentence = "The refining margin in 2024 averaged 4.\n9 dollars per barrel."
+    filler = (
+        "The quarterly report discusses many unrelated topics such as logistics, "
+        "supply chain management, and workforce planning across several business units. "
+        * 100
+    )
+    text = filler[:2990] + fact_sentence
+
+    csv_path = tmp_path / "boundary_fact.csv"
+    with open(csv_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["content"])
+        writer.writerow([text])
+
+    document_id = ingest_document(str(csv_path))
+
+    with psycopg.connect(DATABASE_URL) as conn:
+        rows = conn.execute(
+            "SELECT content FROM nodes WHERE document_id = %s AND embedding IS NOT NULL",
+            (document_id,),
+        ).fetchall()
+
+    assert any(
+        "averaged 4." in content
+        and "9 dollars per barrel" in content
+        and content.index("averaged 4.") < content.index("9 dollars per barrel")
+        for (content,) in rows
+    ), "expected the fact to appear intact within at least one Node despite the boundary that used to split it"

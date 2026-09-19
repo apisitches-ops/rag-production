@@ -27,15 +27,25 @@ def _get_client() -> genai.Client:
     return _client
 
 
-def generate(query: str, contexts: list[tuple[str, str]]) -> tuple[str, bool]:
+def _build_prompt(query: str, contexts: list[tuple[str, str]]) -> str:
     context_block = "\n\n".join(content for _, content in contexts)
-    prompt = (
+    return (
         "Answer the question using ONLY the context below. Be concise. "
         "If the context does not contain enough information to answer, "
-        "set abstained to true.\n\n"
+        "set abstained to true. "
+        "A number is complete if the sentence or clause around it continues normally "
+        "(e.g. more words follow, or it ends with normal punctuation like a full stop "
+        "after other text). Only treat a number as truncated when it sits at the very "
+        "end of the provided context with nothing after it — e.g. a bare decimal point "
+        "immediately followed by nothing. In that specific case, do not guess the "
+        "missing digits — treat that fact as unavailable.\n\n"
         f"Context:\n{context_block}\n\n"
         f"Question: {query}\nAnswer:"
     )
+
+
+def generate(query: str, contexts: list[tuple[str, str]]) -> tuple[str, bool]:
+    prompt = _build_prompt(query, contexts)
     client = _get_client()
     response = client.models.generate_content(
         model=GENERATOR_MODEL,
