@@ -3,12 +3,14 @@ import tempfile
 from pathlib import Path
 
 from fastapi import FastAPI, Form, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
-from app.db import check_connection
+from app.db import check_connection, list_documents
 from app.ingest import ingest_document
 from app.query import answer_query
+
+STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 app = FastAPI()
 
@@ -20,6 +22,11 @@ def _normalize_role(value: str | None) -> str | None:
 class QueryRequest(BaseModel):
     query: str
     acting_role: str | None = None
+
+
+@app.get("/")
+def index() -> FileResponse:
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.get("/health")
@@ -44,6 +51,15 @@ def create_document(file: UploadFile, acl_group: str | None = Form(None)) -> JSO
         except Exception:
             return JSONResponse(status_code=400, content={"detail": "could not ingest file"})
     return JSONResponse(status_code=200, content={"document_id": document_id})
+
+
+@app.get("/documents")
+def get_documents() -> JSONResponse:
+    try:
+        documents = list_documents()
+    except Exception:
+        return JSONResponse(status_code=503, content={"detail": "could not list documents"})
+    return JSONResponse(status_code=200, content=documents)
 
 
 @app.post("/query")

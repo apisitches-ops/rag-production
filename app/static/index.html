@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>rag-production — local testing UI</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }
+  h1 { font-size: 1.4rem; }
+  h2 { font-size: 1.1rem; margin-top: 2.5rem; border-bottom: 1px solid #ddd; padding-bottom: 0.3rem; }
+  form { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0.75rem 0; }
+  input[type="text"] { padding: 0.4rem; min-width: 220px; }
+  button { padding: 0.4rem 0.9rem; cursor: pointer; }
+  table { border-collapse: collapse; width: 100%; margin-top: 0.5rem; }
+  th, td { text-align: left; border: 1px solid #ddd; padding: 0.4rem 0.6rem; font-size: 0.9rem; }
+  .error { color: #b00020; margin-top: 0.5rem; }
+  .abstained { background: #fff3cd; border: 1px solid #ffe08a; padding: 0.75rem; border-radius: 4px; font-weight: bold; }
+  .answer { background: #eef7ee; border: 1px solid #b7e0b7; padding: 0.75rem; border-radius: 4px; white-space: pre-wrap; }
+  .context { background: #f6f6f6; border: 1px solid #ddd; padding: 0.5rem; margin: 0.3rem 0; font-size: 0.85rem; white-space: pre-wrap; }
+  ul { padding-left: 1.2rem; }
+</style>
+</head>
+<body>
+
+<h1>rag-production — local testing UI</h1>
+<p>Local-only tool for exercising ingestion and querying against the real API. Not a deployment.</p>
+
+<h2>Upload a Document</h2>
+<form id="upload-form">
+  <input type="file" id="upload-file" required />
+  <input type="text" id="upload-acl-group" placeholder="ACL Group (optional)" />
+  <button type="submit">Upload</button>
+</form>
+<div id="upload-error" class="error"></div>
+
+<h2>Documents</h2>
+<table>
+  <thead><tr><th>ID</th><th>Name</th><th>ACL Group</th></tr></thead>
+  <tbody id="documents-body"></tbody>
+</table>
+
+<h2>Query</h2>
+<form id="query-form">
+  <input type="text" id="query-text" placeholder="Question" required style="min-width: 400px;" />
+  <input type="text" id="query-acting-role" placeholder="Acting Role (optional)" />
+  <button type="submit">Ask</button>
+</form>
+<div id="query-error" class="error"></div>
+<div id="query-result"></div>
+
+<script>
+let documents = [];
+let documentNameByNodeId = {};
+
+function addCell(row, text) {
+  const cell = document.createElement("td");
+  cell.textContent = text;
+  row.appendChild(cell);
+}
+
+function renderDocuments() {
+  const body = document.getElementById("documents-body");
+  body.innerHTML = "";
+  for (const doc of documents) {
+    const row = document.createElement("tr");
+    addCell(row, doc.id);
+    addCell(row, doc.name);
+    addCell(row, doc.acl_group ?? "");
+    body.appendChild(row);
+  }
+}
+
+async function loadDocuments() {
+  const response = await fetch("/documents");
+  documents = await response.json();
+  documentNameByNodeId = {};
+  for (const doc of documents) {
+    for (const nodeId of doc.node_ids) {
+      documentNameByNodeId[nodeId] = doc.name;
+    }
+  }
+  renderDocuments();
+}
+
+document.getElementById("upload-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const errorEl = document.getElementById("upload-error");
+  errorEl.textContent = "";
+
+  const fileInput = document.getElementById("upload-file");
+  const aclGroup = document.getElementById("upload-acl-group").value;
+
+  const formData = new FormData();
+  formData.append("file", fileInput.files[0]);
+  if (aclGroup) formData.append("acl_group", aclGroup);
+
+  const response = await fetch("/documents", { method: "POST", body: formData });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    errorEl.textContent = body.detail || `Upload failed (${response.status})`;
+    return;
+  }
+
+  fileInput.value = "";
+  document.getElementById("upload-acl-group").value = "";
+  await loadDocuments();
+});
+
+document.getElementById("query-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const errorEl = document.getElementById("query-error");
+  const resultEl = document.getElementById("query-result");
+  errorEl.textContent = "";
+  resultEl.innerHTML = "";
+
+  const query = document.getElementById("query-text").value;
+  const actingRole = document.getElementById("query-acting-role").value;
+
+  const response = await fetch("/query", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query, acting_role: actingRole || null }),
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    errorEl.textContent = body.detail || `Query failed (${response.status})`;
+    return;
+  }
+
+  const result = await response.json();
+  renderResult(result);
+});
+
+function renderResult(result) {
+  const resultEl = document.getElementById("query-result");
+
+  const answerBlock = document.createElement("div");
+  answerBlock.className = result.abstained ? "abstained" : "answer";
+  answerBlock.textContent = result.answer;
+  resultEl.appendChild(answerBlock);
+
+  const contextsHeading = document.createElement("h3");
+  contextsHeading.textContent = "Retrieved Context";
+  resultEl.appendChild(contextsHeading);
+  for (const context of result.contexts) {
+    const contextEl = document.createElement("div");
+    contextEl.className = "context";
+    contextEl.textContent = context;
+    resultEl.appendChild(contextEl);
+  }
+
+  const citationsHeading = document.createElement("h3");
+  citationsHeading.textContent = "Citations";
+  resultEl.appendChild(citationsHeading);
+  const list = document.createElement("ul");
+  for (const nodeId of result.citations) {
+    const item = document.createElement("li");
+    const documentName = documentNameByNodeId[nodeId] || "(unknown Document)";
+    item.textContent = `${documentName} — ${nodeId}`;
+    list.appendChild(item);
+  }
+  resultEl.appendChild(list);
+}
+
+loadDocuments();
+</script>
+
+</body>
+</html>

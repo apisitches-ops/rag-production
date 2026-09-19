@@ -125,3 +125,24 @@ def test_post_documents_rejects_unparseable_upload():
     )
 
     assert response.status_code == 400
+
+
+def test_get_documents_lists_ingested_documents_with_node_ids():
+    client = TestClient(app)
+
+    with open(FIXTURE_PDF, "rb") as f:
+        upload = client.post(
+            "/documents",
+            files={"file": ("sample.pdf", f, "application/pdf")},
+            data={"acl_group": "finance"},
+        )
+    document_id = upload.json()["document_id"]
+
+    response = client.get("/documents")
+
+    assert response.status_code == 200
+    docs = response.json()
+    doc = next(d for d in docs if d["id"] == document_id)
+    assert doc["name"] == "sample.pdf"
+    assert doc["acl_group"] == "finance"
+    assert set(doc["node_ids"]) == node_ids_for(document_id)
