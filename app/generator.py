@@ -28,17 +28,28 @@ def _get_client() -> genai.Client:
 
 
 def _build_prompt(query: str, contexts: list[tuple[str, str]]) -> str:
-    context_block = "\n\n".join(content for _, content in contexts)
+    # Each excerpt is labeled and separated by a marker line, not just "\n\n"
+    # — two unrelated excerpts can each be truncated at their own boundary
+    # (a Node-chunking artifact, #31), and joining them bare lets a number
+    # cut off at the end of one excerpt visually blend into the start of an
+    # unrelated next excerpt (e.g. "...averaged 6." immediately followed by
+    # "3 million barrels..." reads as "6.3", a fabricated cross-excerpt
+    # number, not a guess from the model's own knowledge).
+    context_block = "\n\n---\n\n".join(
+        f"[Excerpt {i}]\n{content}" for i, (_, content) in enumerate(contexts, start=1)
+    )
     return (
         "Answer the question using ONLY the context below. Be concise. "
         "If the context does not contain enough information to answer, "
         "set abstained to true. "
-        "A number is complete if the sentence or clause around it continues normally "
-        "(e.g. more words follow, or it ends with normal punctuation like a full stop "
-        "after other text). Only treat a number as truncated when it sits at the very "
-        "end of the provided context with nothing after it — e.g. a bare decimal point "
-        "immediately followed by nothing. In that specific case, do not guess the "
-        "missing digits — treat that fact as unavailable.\n\n"
+        "Each excerpt is a separate, possibly unrelated passage — never read the "
+        "end of one excerpt as continuing into the next, even where they sit next "
+        "to each other. A number is complete if the sentence or clause around it "
+        "continues normally within its own excerpt. Only treat a number as "
+        "truncated when it sits at the very end of its excerpt with nothing after "
+        "it — e.g. a bare decimal point immediately followed by nothing. In that "
+        "specific case, do not guess or borrow digits from a different excerpt — "
+        "treat that fact as unavailable.\n\n"
         f"Context:\n{context_block}\n\n"
         f"Question: {query}\nAnswer:"
     )
