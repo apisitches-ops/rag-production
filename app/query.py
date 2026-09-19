@@ -150,7 +150,7 @@ def _fused_retrieve(
 
         dense = _DenseRetriever(conn, query_embedding, limit, acting_role, document_ids)
         # num_queries=1 disables QueryFusionRetriever's default LLM-based
-        # query expansion, so this adds no extra Dev Generator call. The
+        # query expansion, so this adds no extra Generator call. The
         # `llm` param is still required (unused here) — omitting it makes the
         # constructor eagerly resolve a default OpenAI LLM, which fails in
         # this environment. use_async=False: neither retriever is actually

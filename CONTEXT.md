@@ -30,13 +30,9 @@ _Avoid_: context (ambiguous with a bounded context)
 
 ### Generation
 
-**Dev Generator**:
-The local model used to produce answers during development and every Eval Gate run, chosen for cost and iteration speed over answer quality.
-_Avoid_: generation model, LLM
-
-**Validation Generator**:
-Claude, used only for the final run against the Golden Set once results with the Dev Generator have stabilized, to produce the numbers reported for the portfolio.
-_Avoid_: generation model, LLM
+**Generator**:
+The model that produces answers from Retrieved Context — Gemini, used identically in development, in every Eval Gate run, and in the final run reported for the portfolio (see [ADR-0006](adr/0006-cloud-hosted-embedding-rerank-generation.md), which retired the earlier Dev Generator/Validation Generator split described in [ADR-0004](adr/0004-dev-and-validation-generator.md)).
+_Avoid_: generation model, LLM, Dev Generator, Validation Generator
 
 **Abstention**:
 The Generator's decision, made at generation time, that the Retrieved Context does not contain enough information to answer the query — returned instead of a guessed answer.

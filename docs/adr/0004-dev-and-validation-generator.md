@@ -1,5 +1,7 @@
 # Separate Dev Generator and Validation Generator
 
+**Superseded by [ADR-0006](0006-cloud-hosted-embedding-rerank-generation.md):** the Dev/Validation split described below was retired — there is now a single Generator (Gemini), used identically in development, in every Eval Gate run, and in the final report. This ADR is kept for the historical reasoning behind the Abstention-protocol and Ragas-`faithfulness` findings below, which ADR-0006 builds on directly.
+
 Cloud LLM calls (Claude) cost money and are made frequently during iterative development and repeated Eval Gate runs. We use a local model as the Dev Generator throughout development and every Eval Gate run, and only switch to Claude as the Validation Generator for a final run once the pipeline's results have stabilized.
 
 ## Consequences
