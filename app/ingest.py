@@ -8,7 +8,7 @@ from llama_index.core.node_parser import HierarchicalNodeParser, get_leaf_nodes
 from pgvector.psycopg import register_vector
 
 from app import cache, db
-from app.ollama import embed
+from app.embeddings import embed
 
 
 def _extract_pdf_text(path: str) -> str:

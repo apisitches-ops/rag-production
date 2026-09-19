@@ -2,7 +2,7 @@ from llama_index.core.schema import MetadataMode
 
 import app.query as query_module
 from app.ingest import ingest_document
-from app.ollama import embed
+from app.embeddings import embed
 from conftest import make_pdf as _make_pdf
 
 

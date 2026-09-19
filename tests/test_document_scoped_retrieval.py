@@ -1,6 +1,6 @@
 import app.query as query_module
 from app.ingest import ingest_document
-from app.ollama import embed
+from app.embeddings import embed
 from app.query import _select_documents
 from conftest import make_pdf, node_ids_for
 

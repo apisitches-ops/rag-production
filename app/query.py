@@ -10,7 +10,7 @@ from typing_extensions import TypedDict
 
 from app import db
 from app.cache import get_cached_answer, set_cached_answer
-from app.ollama import embed
+from app.embeddings import embed
 from app.reranker import rerank
 
 OLLAMA_GENERATE_URL = "http://localhost:11434/api/generate"
