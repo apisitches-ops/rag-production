@@ -13,14 +13,14 @@ def test_answer_query_returns_cached_result_without_rerunning_pipeline(monkeypat
     ingest_document(FIXTURE_PDF)
 
     call_count = 0
-    original_generate = query_module._generate
+    original_generate = query_module.generate
 
     def counting_generate(query, contexts):
         nonlocal call_count
         call_count += 1
         return original_generate(query, contexts)
 
-    monkeypatch.setattr(query_module, "_generate", counting_generate)
+    monkeypatch.setattr(query_module, "generate", counting_generate)
 
     query = "What year does PTT aim to achieve Net Zero emissions?"
     first = answer_query(query)
@@ -34,14 +34,14 @@ def test_answer_query_cache_is_isolated_by_acting_role(monkeypatch):
     ingest_document(FIXTURE_PDF)
 
     call_count = 0
-    original_generate = query_module._generate
+    original_generate = query_module.generate
 
     def counting_generate(query, contexts):
         nonlocal call_count
         call_count += 1
         return original_generate(query, contexts)
 
-    monkeypatch.setattr(query_module, "_generate", counting_generate)
+    monkeypatch.setattr(query_module, "generate", counting_generate)
 
     query = "What year does PTT aim to achieve Net Zero emissions?"
     answer_query(query)

@@ -16,15 +16,18 @@ from ragas.run_config import RunConfig
 
 from app import db
 from app.ingest import ingest_document
-from app.query import DEV_GENERATOR_MODEL, answer_query
+from app.query import answer_query
 
 TRIAD_METRICS = [faithfulness, answer_relevancy, context_precision]
 TRIAD_METRIC_NAMES = [metric.name for metric in TRIAD_METRICS]
-# The Ragas judge's own embedding model — deliberately not the pipeline's
-# EMBED_MODEL (app/embeddings.py, now Voyage AI per ticket #24). The judge
-# stays on the Dev Generator/Ollama stack until ticket #27 swaps it to
-# Gemini + Voyage AI; reusing the pipeline's constant here would silently
-# pass a Voyage model name to OllamaEmbeddings and break scoring.
+# The Ragas judge's own LLM and embedding model — deliberately not the
+# pipeline's own generator (app/generator.py, now Gemini per ticket #26) or
+# embedding model (app/embeddings.py, now Voyage AI per ticket #24). The
+# judge stays on the old Ollama stack until ticket #27 swaps it to
+# Gemini + Voyage AI; reusing the pipeline's constants here would either
+# pass a Gemini model name to ChatOllama or a Voyage name to
+# OllamaEmbeddings and break scoring.
+JUDGE_LLM_MODEL = "llama3.1:8b"
 JUDGE_EMBED_MODEL = "bge-m3"
 
 
@@ -47,7 +50,7 @@ def _should_abstain(item: dict) -> bool:
 
 
 def _score_answered_items(answered: list[dict]) -> None:
-    llm = LangchainLLMWrapper(ChatOllama(model=DEV_GENERATOR_MODEL, temperature=0))
+    llm = LangchainLLMWrapper(ChatOllama(model=JUDGE_LLM_MODEL, temperature=0))
     embeddings = LangchainEmbeddingsWrapper(OllamaEmbeddings(model=JUDGE_EMBED_MODEL))
 
     dataset = Dataset.from_dict(

@@ -1,4 +1,3 @@
-import httpx
 import psycopg
 from llama_index.core.retrievers import BaseRetriever, QueryFusionRetriever
 from llama_index.core.retrievers.fusion_retriever import FUSION_MODES
@@ -11,10 +10,15 @@ from typing_extensions import TypedDict
 from app import db
 from app.cache import get_cached_answer, set_cached_answer
 from app.embeddings import embed
+from app.generator import generate
 from app.reranker import rerank
 
-OLLAMA_GENERATE_URL = "http://localhost:11434/api/generate"
-DEV_GENERATOR_MODEL = "llama3.1:8b"
+# QueryFusionRetriever's constructor requires an `llm`, but num_queries=1
+# below disables the only path that would actually call it (LLM-based query
+# expansion) — this is never invoked, just a placeholder to satisfy the
+# constructor without it eagerly resolving a default OpenAI LLM (which fails
+# in this environment). Unrelated to app/generator.py's real Generator.
+_FUSION_LLM_PLACEHOLDER_MODEL = "llama3.1:8b"
 TOP_K = 5
 # Over-fetch a wider dense-similarity pool than TOP_K so the reranker has
 # real candidates to reorder, instead of TOP_K being decided by dense
@@ -27,11 +31,6 @@ assert RETRIEVAL_CANDIDATES > TOP_K, "over-fetch pool must be wider than the fin
 # of wrong answers were cross-document contamination).
 DOCUMENT_CANDIDATES = 3
 
-# Dev Generator (llama3.1:8b) can't reliably produce structured output, so
-# Abstention is signalled with a plain-text marker instead of JSON. Switch to
-# structured JSON output when the Validation Generator (Claude) is wired in
-# — see ADR-0004.
-ABSTENTION_MARKER = "INSUFFICIENT_CONTEXT"
 ABSTENTION_MESSAGE = "The available context doesn't contain enough information to answer this question."
 
 
@@ -159,7 +158,7 @@ def _fused_retrieve(
         # for no concurrency benefit.
         fusion = QueryFusionRetriever(
             [dense, bm25],
-            llm=Ollama(model=DEV_GENERATOR_MODEL, request_timeout=120),
+            llm=Ollama(model=_FUSION_LLM_PLACEHOLDER_MODEL, request_timeout=120),
             mode=FUSION_MODES.RECIPROCAL_RANK,
             similarity_top_k=limit,
             num_queries=1,
@@ -284,29 +283,6 @@ def _retrieve(
     return rerank(query, candidates)[:TOP_K]
 
 
-def _generate(query: str, contexts: list[tuple[str, str]]) -> str:
-    context_block = "\n\n".join(content for _, content in contexts)
-    prompt = (
-        "Answer the question using ONLY the context below. Be concise. "
-        f"If the context does not contain enough information to answer, respond with exactly: {ABSTENTION_MARKER}\n\n"
-        f"Context:\n{context_block}\n\n"
-        f"Question: {query}\nAnswer:"
-    )
-    response = httpx.post(
-        OLLAMA_GENERATE_URL,
-        json={
-            "model": DEV_GENERATOR_MODEL,
-            "prompt": prompt,
-            "stream": False,
-            "options": {"temperature": 0},
-        },
-        timeout=120,
-    )
-    response.raise_for_status()
-    text: str = response.json()["response"]
-    return text.strip()
-
-
 def answer_query(query: str, acting_role: str | None = None) -> Answer:
     cached = get_cached_answer(query, acting_role)
     if cached is not None:
@@ -314,9 +290,9 @@ def answer_query(query: str, acting_role: str | None = None) -> Answer:
 
     query_embedding = embed([query])[0]
     contexts = _retrieve(query, query_embedding, acting_role)
-    generated = _generate(query, contexts)
+    generated, abstained = generate(query, contexts)
 
-    if ABSTENTION_MARKER in generated:
+    if abstained:
         answer = Answer(answer=ABSTENTION_MESSAGE, citations=[], contexts=[], abstained=True)
     else:
         answer = Answer(
