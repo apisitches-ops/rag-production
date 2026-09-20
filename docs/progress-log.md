@@ -292,3 +292,17 @@ TDD as before (`tests/test_generator.py`, one new red→green test at the same s
 **Adjustment:** #33's ticket and #31 both got a correction comment on GitHub rather than editing history — the original diagnosis was wrong, not just incomplete, and that's worth being visible rather than silently overwritten.
 
 **Next:** #34 still open — but its acceptance criteria (Eval Gate rerun, manual repro now answering 6.8) need re-checking against this corrected understanding: the honest outcome for the exact reported question is abstention, not necessarily 6.8, unless the deeper Node-splitting problem also gets solved.
+
+## 2026-09-20 08:33 — `85d0790` Tickets #36/#37/#38 (spec #35): stitch the real next Node, not a prompt request
+
+Deeper follow-up to #31/#33: `next_id` persisted at ingestion (mirrors `parent_id`, using `HierarchicalNodeParser`'s `next_node`/`prev_node` relationships — confirmed empirically these are only ever populated at the parent level, never between leaf Nodes, which turns out to be exactly the level Retrieved Context already displays via parent-widening). A deterministic (non-LLM) check flags a Node's content as truncated when it ends in a bare decimal point, and `_retrieve()` now stitches the real next-sibling Node's content into Retrieved Context for a flagged candidate before it reaches the Generator — recovering the actual correct value instead of hoping the prompt instruction holds.
+
+**Verified against the real originally-reported case, not just a synthetic fixture** (the exact gap flagged in the 06:58 entry above): the PTT One Report question now answers 6.8, confirmed in the test suite (`tests/fixtures/truncated_fact.csv`, a real excerpt from the actual Document) and live against the running API across several phrasings.
+
+**Code-review (`/code-review`, forked/background) caught two real correctness gaps, both fixed before landing:**
+- The truncation regex alone flags any content ending in digit+period, including a legitimate complete sentence ending in a whole number (e.g. "...fiscal year 2024."). Fixed by gating the actual stitch on the candidate next-sibling Node's content *also* starting with a digit — the joint signature of a genuinely split decimal, not just one side of it.
+- `chunk_overlap` re-includes a trailing run of tokens from the current Node at the start of the next Node; naive concatenation duplicated text — empirically confirmed for an unrelated candidate in the same query ("4.1 - 5.1" became "4.1 - 5.1 - 5.1"). Fixed with a longest-suffix/prefix overlap merge; re-verified the same case is now clean.
+
+Also took two cheap efficiency findings from the same review: `parent_id`/`next_id` now persist in one combined `UPDATE` pass instead of two, and a query's whole candidate set's next-Node lookups batch into one query instead of one DB connection per truncated candidate.
+
+**Next:** #39 — Eval Gate rerun against the current baseline (not yet run, ~1.5-2hrs, checking with the user before kicking it off) and closing out #34/#35's remaining housekeeping.
