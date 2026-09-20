@@ -76,6 +76,20 @@ def test_ingest_document_stores_acl_group():
     assert row == ("finance",)
 
 
+def test_ingest_document_stores_next_id_for_sibling_nodes():
+    document_id = ingest_document(FIXTURE_PDF)
+
+    with psycopg.connect(DATABASE_URL) as conn:
+        rows = conn.execute(
+            "SELECT id, next_id FROM nodes WHERE document_id = %s", (document_id,)
+        ).fetchall()
+
+    ids = {row_id for row_id, _ in rows}
+    next_ids = {next_id for _, next_id in rows if next_id is not None}
+    assert next_ids, "expected at least one Node to have a next_id"
+    assert next_ids <= ids, "every next_id should point at another Node from the same Document"
+
+
 def test_ingest_document_node_overlap_keeps_a_boundary_straddling_fact_intact(tmp_path):
     # This exact filler length was found empirically to land a Node boundary
     # right between "4." and "9 dollars" at chunk_overlap=20 (the library's

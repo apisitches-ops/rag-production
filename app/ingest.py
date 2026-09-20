@@ -94,11 +94,14 @@ def ingest_document(
         )
 
         conn.cursor().executemany(
-            "UPDATE nodes SET parent_id = %s WHERE id = %s",
+            "UPDATE nodes SET parent_id = %s, next_id = %s WHERE id = %s",
             [
-                (node.parent_node.node_id, node.node_id)
+                (
+                    node.parent_node.node_id if node.parent_node is not None else None,
+                    node.next_node.node_id if node.next_node is not None else None,
+                    node.node_id,
+                )
                 for node in nodes
-                if node.parent_node is not None
             ],
         )
 

@@ -1,3 +1,5 @@
+import re
+
 import psycopg
 from llama_index.core.retrievers import BaseRetriever, QueryFusionRetriever
 from llama_index.core.retrievers.fusion_retriever import FUSION_MODES
@@ -32,6 +34,16 @@ assert RETRIEVAL_CANDIDATES > TOP_K, "over-fetch pool must be wider than the fin
 DOCUMENT_CANDIDATES = 3
 
 ABSTENTION_MESSAGE = "The available context doesn't contain enough information to answer this question."
+
+# The confirmed real pattern (#31): a Node ending mid-number, a run of
+# digits immediately followed by a decimal point with nothing after it.
+# Deliberately narrow rather than a broad "incomplete sentence" heuristic,
+# to keep false positives low.
+_TRUNCATED_DECIMAL_RE = re.compile(r"\d\.\s*$")
+
+
+def _looks_truncated(content: str) -> bool:
+    return bool(_TRUNCATED_DECIMAL_RE.search(content))
 
 
 class Answer(TypedDict):
@@ -264,6 +276,62 @@ def _select_documents(
     return ranked[:limit]
 
 
+def _merge_with_overlap(content: str, next_content: str) -> str:
+    # chunk_overlap re-includes a run of trailing tokens from `content` at
+    # the start of `next_content` — appending it bare would duplicate that
+    # run. Find the longest suffix of `content` that's also a prefix of
+    # `next_content` and only append what follows it.
+    max_overlap = min(len(content), len(next_content))
+    for overlap_len in range(max_overlap, 0, -1):
+        if content[-overlap_len:] == next_content[:overlap_len]:
+            return content + next_content[overlap_len:]
+    return content + next_content
+
+
+def _stitch_truncated_contents(candidates: list[tuple[str, str]]) -> list[tuple[str, str]]:
+    truncated_ids = [node_id for node_id, content in candidates if _looks_truncated(content)]
+    if not truncated_ids:
+        return candidates
+
+    # node_id is always the leaf Node's own id (see _DenseRetriever/
+    # _bm25_retriever above), even when `content` was widened to its
+    # parent's — so the real next-sibling Node is the parent's next_id when
+    # a parent exists, falling back to the leaf's own next_id otherwise
+    # (currently unreachable with chunk_sizes=[512, 128], since every Node
+    # with an embedding has a parent — kept for whichever level actually
+    # produced the displayed content, matching COALESCE(p.content,
+    # n.content)'s own precedence). Single-hop: the appended Node's own
+    # content is not itself checked for truncation.
+    with psycopg.connect(db.DATABASE_URL) as conn:
+        rows = conn.execute(
+            """
+            SELECT n.id, CASE WHEN n.parent_id IS NOT NULL THEN pn.content ELSE ln.content END
+            FROM nodes n
+            LEFT JOIN nodes p ON p.id = n.parent_id
+            LEFT JOIN nodes pn ON pn.id = p.next_id
+            LEFT JOIN nodes ln ON ln.id = n.next_id
+            WHERE n.id = ANY(%s)
+            """,
+            (truncated_ids,),
+        ).fetchall()
+    next_content_by_id = {node_id: next_content for node_id, next_content in rows}
+
+    result = []
+    for node_id, content in candidates:
+        next_content = next_content_by_id.get(node_id)
+        # Only stitch when the candidate continuation actually looks like it
+        # completes a number here — content ending in a bare decimal point
+        # can otherwise be a complete sentence that just happens to end in
+        # a whole number (e.g. "...fiscal year 2024."), and appending an
+        # unrelated Node's content onto that would reintroduce the same
+        # cross-excerpt contamination #33 already fixed at the prompt level.
+        if next_content is not None and next_content.lstrip()[:1].isdigit():
+            result.append((node_id, _merge_with_overlap(content, next_content)))
+        else:
+            result.append((node_id, content))
+    return result
+
+
 def _retrieve(
     query: str, query_embedding: list[float], acting_role: str | None = None
 ) -> list[tuple[str, str]]:
@@ -280,7 +348,8 @@ def _retrieve(
         seen_groups.add(group_key)
         candidates.append((node_id, content))
 
-    return rerank(query, candidates)[:TOP_K]
+    top = rerank(query, candidates)[:TOP_K]
+    return _stitch_truncated_contents(top)
 
 
 def answer_query(query: str, acting_role: str | None = None) -> Answer:

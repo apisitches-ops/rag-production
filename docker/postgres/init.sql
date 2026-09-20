@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS nodes (
     id TEXT PRIMARY KEY,
     document_id INTEGER NOT NULL REFERENCES documents(id),
     parent_id TEXT REFERENCES nodes(id),
+    next_id TEXT REFERENCES nodes(id),
     content TEXT NOT NULL,
     embedding vector(1024)
 );
