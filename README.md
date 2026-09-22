@@ -15,28 +15,6 @@ POST /query       →  ask a question, get an answer with citations, or an hones
                       "I don't know" — never a confident guess
 ```
 
-## Why this exists
-
-Portfolio RAG projects usually stop at "call an embedding API, call a vector DB,
-call an LLM API, done." This one was built to find out what breaks past that point,
-and the answer was: a lot, and not always what intuition predicts. A hybrid
-dense+BM25 retriever and a cross-encoder reranker — the textbook fix for retrieval
-quality — shipped and got manually reviewed against a 200-question Golden Set, and
-**89% of the wrong answers were still cross-document contamination**, the exact
-failure mode reranking was supposed to fix. Root-causing that (not just patching the
-symptom) led to document-scoped retrieval instead — narrow to the likely-relevant
-Documents *before* chunk-level search, rather than trusting a reranker to sort out
-contamination after the fact. See [Engineering notes](#engineering-notes) for how
-that was actually diagnosed, including two "obvious" fixes that were tried and
-measurably didn't work.
-
-The project also migrated its entire embedding/reranking/generation stack from
-local Ollama models to cloud APIs (Voyage AI + Gemini) mid-project — not because the
-local setup was broken, but because the deploy target has no GPU/Ollama available at
-all, and because the switch surfaced its own real bugs (a stale third-party library
-incompatibility that looked exactly like an infinite hang until it wasn't). See
-[ADR-0006](docs/adr/0006-cloud-hosted-embedding-rerank-generation.md).
-
 ## How it works
 
 **Ingestion** (`POST /documents`):
