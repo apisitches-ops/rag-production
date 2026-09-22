@@ -120,7 +120,7 @@ DATABASE_URL=postgresql://rag:rag@localhost:5432/rag \
 
 `eval/golden_set.json` + `eval/corpus/` (51 Documents, 200 questions across 6
 categories, derived from the Kaggle Financial/Legal Evaluation Dataset via
-`eval/build_corpus.py` — see [`train.csv`](train.csv)) is the Golden Set, standing
+`eval/build_corpus.py` — see [`train.csv`](eval/data/train.csv)) is the Golden Set, standing
 in for the real PTT One Report corpus until that's the actual ingestion target.
 Running it wipes and re-ingests the database:
 
@@ -209,6 +209,7 @@ app/
 eval/
   build_corpus.py  Kaggle CSV → eval/corpus/ + golden_set.json
   run_eval.py      runs the Golden Set, scores with Ragas, writes a report
+  data/train.csv   Kaggle source data build_corpus.py depends on directly
   corpus/          51 eval Documents
   golden_set.json  200 questions across 6 categories
 tests/             pytest — no mocking of external APIs, see Tests above
@@ -216,9 +217,9 @@ docs/
   adr/                ADRs — architectural decisions and what superseded them
   progress-log.md     narrative log of every round of work and what was found
   eval-comparison.md  full breakdown of the historical eval runs
+  rag-production-plan.txt  original planning doc, grilled into CONTEXT.md/ADRs
 CONTEXT.md         project glossary — Document, Node, ACL Group, Acting Role,
                     Generator, Abstention, Guardrail, Golden Set, Eval Gate, ...
-train.csv          Kaggle source data build_corpus.py depends on directly
 ```
 
 ## Known limitations

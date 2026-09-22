@@ -21,7 +21,7 @@ def test_build_produces_all_corpus_csvs_and_golden_set_entries(tmp_path):
     corpus_dir = tmp_path / "corpus"
     golden_set_path = tmp_path / "golden_set.json"
 
-    build("train.csv", str(corpus_dir), str(golden_set_path))
+    build("eval/data/train.csv", str(corpus_dir), str(golden_set_path))
 
     golden_set = json.loads(golden_set_path.read_text())
     assert len(golden_set) == 200

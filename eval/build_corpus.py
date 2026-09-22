@@ -42,4 +42,4 @@ def build(csv_path: str, corpus_dir: str, golden_set_path: str) -> None:
 
 
 if __name__ == "__main__":
-    build("train.csv", "eval/corpus", "eval/golden_set.json")
+    build("eval/data/train.csv", "eval/corpus", "eval/golden_set.json")
